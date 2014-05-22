@@ -1,0 +1,32 @@
+\chapter{Background}
+
+\section{GPU Architecture}
+
+\section{Compression}
+
+\subsection{Lempel Ziv Factorization}
+The LZ factorization of a string S[n] decomposes S into factors S = w1w2. . . wk where k<=n, where each factor wi is either the longest factor that appears left of wi in S or is a new character. For example, the LZ factorization of string abbaabbbaaabab has the factorization a.b.b.a.abb.baa.ab.ab. This can be encoded simply with a position of previous occurence and the length of the match or a character, if the length is 0. Practical compression schemes might be encoded in triplets with the position, length, and the first letter of mismatch. Various algorithms have been compared experimentally in \cite{ }. In general, LZ factorization algorithms all make use of a few common data structures and stages, the suffix array, the LCP array, and the LPF array. 
+
+\subsubsection{Suffix Array}
+
+The suffix array is a common data structure in string matching algorithms. The suffix array SA of S is a lexicicographically ordered array of integers of size n where each integer represents a suffix of S, so that suf[SA[0]] < suf[SA[1]] < . . .  suf[SA[n-1]].
+
+Suffix tree applications.
+
+Suffix tree talk.
+
+Various algorithms exist for the construction of suffix arrays. The skew algorithm of Kark \cite{ } uses a divide and conquer approach to construct a partial suffix array to infer the rest of the positions. Running in linear time, the skew algorithm has also been studied in parallel. The fastest known construction of suffix arrays on the GPU by Meo and Deeeley utilizes the skew algorithm. Our work is also a reimplementation and benchmark of that algorithm inspired by most of their ideas.
+
+\subsubsection{LCP and LPF Array}
+
+The LCP, longest common prefix, array is an auxiliary structure to the suffix array that provides the longest common prefix between successive suffixes in SA. Formally, position i in the LCP array, LCP[i] = lcp(suf[SA[i-1]],suf[SA[i]]).
+
+The LPF, longest previous factor, array holds the lengths of the longest factors at any position i. In other words, LPF[i] holds the maximum lcp of suf[sa[i]] and all suffixes less than i.
+
+\subsubsection{LZ Factorization Calculation}
+
+Previous works have computed the LPF array from the LCP array using ranged minimum queries. More recent works do a lazy computation.
+
+The lz factorization can be computed by following the lpf array.
+
+% http://delivery.acm.org.ezproxy.lib.calpoly.edu/10.1145/2380000/2379781/a5-al-hafeedh.pdf?ip=129.65.23.208&id=2379781&acc=ACTIVE%20SERVICE&key=F26C2ADAC1542D74%2E2870C5A035FC0FDB%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35&CFID=343020533&CFTOKEN=37720775&__acm__=1400733002_66a60490d28a219a079b67ccd7c8315e
