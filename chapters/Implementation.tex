@@ -4,10 +4,194 @@ There exists three main steps in my implementation, the construction of the suff
 
 \section{SA}
 
+
+\begin{figure}
+\begin{algorithmic}[1]
+\Procedure{computeSA}{$s,sa,n$}
+\State initMod12();\Comment{Kernel to set flags at 2/3. DeviceSelect to get s12,sa12}
+\State radixSort($s12$);\Comment{DeviceRadixSort}
+\State radixSort($s12$); 
+\State radixSort($s12$); 
+\State lexicRankOfTriplets();\Comment{Custom kernel to check unique. Inclusive Sum to count. Custom kernel to get s12.}
+\If{!allUniqueRanks}
+\State computeSA($s12,sa12$);\Comment{Recursion}
+\State storeUniqueRanks();\Comment{Kernel}
+\Else
+\State computeSAFromUniqueRank();\Comment{Kernel}
+\EndIf
+\State radixSort($s0$); 
+\State mergeSort($s0,s12$);\Comment{Merge Path + Merge Sort} 
+\EndProcedure
+\end{algorithmic}
+\caption{Suffix Array Construction Pseudocode from \cite{ }. Comments add details from our implementation.}\label{euclid}
+\end{figure}
+
+\begin{figure}
+\begin{algorithmic}[1]
+\Procedure{ANSV}{}
+\For{each level of MinTree}\Comment{Bottom Up Construction}
+\State MinTree($level$);\Comment{Build level by calculating minima of children}
+\EndFor
+\State ANSVKernel($mintree,chunkSize$)
+\EndProcedure
+\end{algorithmic}
+\begin{algorithmic}[1]
+\Procedure{ANSVKernel}{}
+\State $chunk \gets threadID * chunkSize$\Comment{Each thread gets a unique chunk}
+\State ANSVLinear($chunk$)
+\If($chunk$ detects no PSV/NSV)\Comment{ANSVLinear may be wrong}
+\State checkMinTree($mintree$)\Comment{Manually check MinTree}
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\caption{ANSV Generation}
+\end{figure}
+
+\begin{table}[h]
+\begin{tabular}{llll}
+sa & suf-lex        & nsv-lex & psv-lex \\
+8  & aaabab         & 3       & -1      \\
+9  & aabab          & 3       & 8       \\
+3  & aabbbaaabab    & 0       & -1      \\
+12 & ab             & 10      & 3       \\
+10 & abab           & 0       & 3       \\
+0  & abbaabbbaaabab & -1      & -1      \\
+4  & abbbaaabab     & 2       & 0       \\
+13 & b              & 7       & 4       \\
+7  & baaabab        & 2       & 4       \\
+2  & baabbbaaabab   & 1       & 0       \\
+11 & bab            & 6       & 2       \\
+6  & bbaaabab       & 1       & 2       \\
+1  & bbaabbbaaabab  & -1      & 0       \\
+5  & bbbaaabab      & -1      & 1      
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{lllllllll}
+i  & S{[}i{]} & nsv-lex & nsv-match & psv-lex & psv-match & LPF{[}i{]} & PrevOcc{[}i{]} & LZ \\
+0  & a        & -1      & -         & -1      & 0         & -1         & 0              &    \\
+1  & b        & -1      & -         & 0       & -         & 0          & -1             & 1  \\
+2  & b        & 1       & b         & 0       & -         & 1          & 1              & 2  \\
+3  & a        & 0       & a         & -1      & -         & 1          & 0              & 3  \\
+4  & a        & 2       & -         & 0       & abb       & 3          & 0              & 4  \\
+5  & b        & -1      & -         & 1       & bb        & 2          & 1              & -  \\
+6  & b        & 1       & bbaa      & 2       & bb        & 4          & 1              & -  \\
+7  & b        & 2       & baa       & 4       & -         & 3          & 2              & 7  \\
+8  & a        & 3       & aa        & -1      & -         & 2          & 3              & -  \\
+9  & a        & 3       & aab       & 8       & aa        & 3          & 3              & -  \\
+10 & a        & 0       & ab        & 3       & a         & 2          & 0              & 10 \\
+11 & b        & 6       & b         & 2       & ba        & 2          & 2              & -  \\
+12 & a        & 10      & ab        & 3       & a         & 2          & 10             & 12 \\
+13 & b        & 7       & b         & 4       & -         & 1          & 7              & - 
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\begin{tabular}{llllll}
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\
+0  & a        & -1         & -1         & 0          & 0  \\
+1  & b        & -1         & 0          & 0          & 1  \\
+2  & b        & 1          & 0          & 1          & 2  \\
+3  & a        & 0          & -1         & 1          & 3  \\
+4  & a        & 2          & 0          & 3          & 4  \\
+5  & b        & -1         & 1          &            &    \\
+6  & b        & 1          & 2          &            &    \\
+   &          &            &            &            &    \\
+7  & b        & 2          & 4          & 3          & 7  \\
+8  & a        & 3          & -1         &            &    \\
+9  & a        & 3          & 8          &            &    \\
+10 & a        & 0          & 3          & 2          & 10 \\
+11 & b        & 6          & 2          &            &    \\
+12 & a        & 10         & 3          & 2          & 12 \\
+13 & b        & 7          & 4          &            &   
+\end{tabular}
+\end{table}
+
+% Please add the following required packages to your document preamble:
+\begin{table}[h]
+\begin{tabular}{@{}llllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & 0          & 0  \\
+1  & b        & -1         & 0          & 0          & 1  \\
+2  & b        & 1          & 0          & 1          & 2  \\
+3  & a        & 0          & -1         & 1          & 3  \\
+4  & a        & 2          & 0          & 3          & 4  \\
+5  & b        & -1         & 1          &            &    \\
+6  & b        & 1          & 2          &            &    \\
+   &          &            &            &            &    \\
+7  & b        & 2          & 4          & 3          & 7  \\
+8  & a        & 3          & -1         &            &    \\
+9  & a        & 3          & 8          &            &    \\
+10 & a        & 0          & 3          & 2          & 10 \\
+11 & b        & 6          & 2          &            &    \\
+12 & a        & 10         & 3          & 2          & 12 \\
+13 & b        & 7          & 4          &            &    \\ \bottomrule
+\end{tabular}
+\caption{Split=7,LZ=8}
+\end{table}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[h]
+\begin{tabular}{@{}llllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & 0          & 0  \\
+1  & b        & -1         & 0          & 0          & 1  \\
+2  & b        & 1          & 0          & 1          & 2  \\
+3  & a        & 0          & -1         & 1          & 3  \\
+   &          &            &            &            &    \\
+4  & a        & 2          & 0          & 3          & 4  \\
+5  & b        & -1         & 1          & -          & -  \\
+6  & b        & 1          & 2          & -          & -  \\
+7  & b        & 2          & 4          & 3          & 7  \\
+   &          &            &            &            &    \\
+8  & a        & 3          & -1         & 2          & 8  \\
+9  & a        & 3          & 8          & -          & -  \\
+10 & a        & 0          & 3          & 2          & 10 \\
+11 & b        & 6          & 2          & -          & -  \\
+   &          &            &            &            &    \\
+12 & a        & 10         & 3          & 2          & 12 \\
+13 & b        & 7          & 4          & -          & -  \\ \bottomrule
+\end{tabular}
+\caption{Split=4,LZ=9}
+\label{my-label}
+\end{table}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+\begin{table}[h]
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & PrevOcc{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & -1             & 0          & 0  \\
+1  & b        & -1         & 0          & -1             & 0          & 1  \\
+2  & b        & 1          & 0          & 1              & 1          & 2  \\
+   &          &            &            &                &            &    \\
+3  & a        & 0          & -1         & 0              & 1          & 3  \\
+4  & a        & 2          & 0          & 0              & 2          & 4  \\
+5  & b        & -1         & 1          & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+6  & b        & 1          & 2          & 1              & 3          & 6  \\
+7  & b        & 2          & 4          & -              & -          & -  \\
+8  & a        & 3          & -1         & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+9  & a        & 3          & 8          & 3              & 3          & 9  \\
+10 & a        & 0          & 3          & -              & -          & -  \\
+11 & b        & 6          & 2          & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+12 & a        & 10         & 3          & 10             & 2          & 12 \\
+13 & b        & 7          & 4          & -              & -          & -  \\ \bottomrule
+\end{tabular}
+\label{my-label}
+\caption{Split=3,LZ=8}
+\end{table}
+
 The construction of the suffix array stays true to the algorithm used by deo and meely \cite{ }.
 The pseudocode for the skew algorithm is presented in.
 Smaller individual kernels can be used to first.
-
 
 To sort the partial suffixes using radix sort, I used the CUB implementation of radix sort.
 After those partial suffixes are sorted, they need to be checked for uniqueness.
@@ -101,4 +285,24 @@ In my implementation, I have the option to use arbitrary sizes or even divisions
 Some optimal sizes might be divisions of the input of multiples of the number of multiprocessors.
 In any case, it is impossible to predict the compression ratio, and different people will have different priorities.
 
-Finally, it is shown how we can calculated the LPF. Because the LPF can occur at either the PSV or the NSV, we need to check both and pick the longer as mentioned before. Reaching the edge of the boundary of a chunk in the first search allows us to skip the second search. When the longer is found, we can insert that into a prevocc array. We can use either the LPF or the prevocc array as flags to indicate where the LZ factorization occurs. A final deviceSelect using flags from CUB can be used in a practical solution.
+One thing that I did have yet to cover is how we perform the string match.
+The naive operation is to do a character by character match until the prefix no longer matches with the LPF.
+One optimization that I have implemented is to instead do a parallel string comparison.
+A block of threads can load a group of characters into shared memory.
+The BlockLoad primitive from CUB is used to load a number of characters from the LPF and from the prefix into arrays for use in an individual thread in the block.
+To simplify, we can imagine a block of 32 threads loading a chunk of 32 characters from the LPF and prefix.
+Each thread, responsible for a single index and two characters, then compares the two characters for a match.
+A match is assigned the value blockDim.x (32), and a mismatch is assigned the value threadIdx.x (0-31).
+The threads can then cooperatively min reduce the problem, with the BlockReduce primitive from CUB for example.
+If all 32 characters matched, the value 32 is returned to the first thread in the block, which controls all the logic.
+That thread will then set a flag to indicate to the rest of threads to continue with the comparisons.
+If there exist a mismatch, the index of the mismatch is instead returned to the first thread, which can then stop the comparisons.
+Which implementation is faster is soley dependent on the data and the average factor length.
+Average factor lengths less than the number of characters loaded and compared in parallel may see faster speeds with just the naive comparisons.
+My implementation will use the parallel string comparison for evaluation.
+
+Finally, it is shown how we can calculated the LPF. 
+Because the LPF can occur at either the PSV or the NSV, we need to check both and pick the longer as mentioned before. 
+Reaching the edge of the boundary of a chunk in the first search allows us to skip the second search.When the longer is found, we can insert that into a prevocc array. 
+
+The final LZ factorization, made up of relevant entries from the LPF and prevocc arrays, can be gathered by using the DeviceSelect and CudaMemcpy.

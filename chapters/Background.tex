@@ -2,31 +2,171 @@
 
 \section{GPU Architecture}
 
+\subsection{CUDA}
+\subsection{Memory Model}
+\subsection{Thread Model}
+\subsection{Libraries and Parallel Primitives}
+
+There exist a variety of libaries that make development on CUDA more streamlined.
+These libraries provide a variety of uses for the CUDA programmer.
+Some provide a fast solution to a particular problem.
+Others provide layers of abstraction to hide the complexity of CUDA programming.
+This includes the transfer of memory and the thread/block/grid handling.
+In our implementation, we try and use libraries whenever possible.
+First, these libraries have been developed over a long time by people who are more familiar with the architecture and the quirks that come with it.
+Second, abstraction allows a problem to be continually optimized, while presenting a common API to use.
+This allows us to somewhat futureproof our implementation, since the libraries should be updated in the future against newer CUDA versions and hardware.
+Also, some problems may seem simple at first, but too complex for a user to implement every time.
+Lastly, the purpose of many libraries are to provide solutions to parallel primitives.
+
+Parallel primitives change the way a programmer looks at implementing a parallel algorithm on the GPU.
+Instead of having to create a totally new algorithm specific for the GPU, one can change their program to be a collection of parallel primitives.
+These parallel primitives are common operations that we see in parallel algorithms across any architecture.
+Some very well known operations are scans, like prefix sum, or reductions, such as finding the min or sum of an array.
+Although these primitives may seem simple at first, there are many tricks used by these libraries to provide speed up.
+Many of these are CUDA specific and a beginner to intermediate CUDA engineer are likely to not know them.
+
+One of the most widely used CUDA libraries is the Thrust library.
+The Thrust library claims to resemble the STL and provide device-wide primitives to be used.
+One of the key features of the Thrust library is the interoperability of different architectures and technologies (CUDA, OpenMP, TBB).
+Although this may be nice for portability, we decided to avoid the use of Thrust and use the more CUDA-specific CUB library.
+CUB provides abstractions at all three layers of the CUDA thread model, the device, the block, and the warp.
+CUB is more aware of CUDA features, like streams.
+That said, many of the algorithms are shared between CUB and Thrust.
+We decided to choose CUB for its claims at higher performance than Thrust and specific features unavailable in Thrust, like the primitives that work on the block level.
+Some of the primitives that we use in our implementation include an inclusive sum, device select, radix sort, and block reduce.
+
+Another interesting library that we make use of is Modern GPU, MGPU.
+More specifically we make use of its algorithm for merge sorting.
+One of the primary concerns when parallel programming is how to load balance a problem across the threads.
+MGPU makes use of a technique called Merge Path to achieve this \cite{ }.
+Merge Path realizes that if we imagined the two arrays on a grid, the merge sort follows a path through it.
+We can run diagonals throught the grid to find their intersection with this Merge Path, where all comparisons are true on one side and false on the other.
+This can be done quickly using a binary sort.
+We can now figure out exactly which sections of the arrays correspond to sections of the final merged array.
+With even divisions, we can evenly divide the final output among the threads, each knowing which sections of the input array they need.
+Those threads can then merge those sections, employing Merge Path if they so wish to.
+
+There are some caveats when using these libraries.
+The first is that they provide an additional dependency to your application.
+Sometimes these libraries can be cumbersome to install or too big for the host system.
+The next is that it is feasible to write a higher performant code with specific knowledge of the application.
+For example, knowing that part of the input array always appears in certain positions in the merged output could be utilized by the programmer.
+We decide to ignore these caveats in our implementation.
+
 \section{Compression}
 
+talk about compression and lempel ziv
+lossy vs lossless
+
 \subsection{Lempel Ziv Factorization}
-The LZ factorization of a string S[n] decomposes S into factors S = w1w2. . . wk where k<=n, where each factor wi is either the longest factor that appears left of wi in S or is a new character. For example, the LZ factorization of string abbaabbbaaabab has the factorization a.b.b.a.abb.baa.ab.ab. This can be encoded simply with a position of previous occurence and the length of the match or a character, if the length is 0. Practical compression schemes might be encoded in triplets with the position, length, and the first letter of mismatch. Various algorithms have been compared experimentally in \cite{ }. In general, LZ factorization algorithms all make use of a few common data structures and stages, the suffix array, the LCP array, and the LPF array. 
+
+The LZ factorization of a string S[n] decomposes S into factors S = w1w2wk where k<=n, where each factor wi is either the longest factor that appears left of wi in S or is a new character.
+For example, the LZ factorization of string abbaabbbaaabab has the factorization a.b.b.a.abb.baa.ab.ab.
+Various algorithms have been compared experimentally in \cite{ }.
+In general, LZ factorization algorithms all make use of a few common data structures and stages, the suffix array, the LCP array, the LPF array, and the PrevOcc array.
 
 \subsubsection{Suffix Array}
 
-The suffix array is a common data structure in string matching algorithms. The suffix array SA of S is a lexicicographically ordered array of integers of size n where each integer represents a suffix of S, so that suf[SA[0]] < suf[SA[1]] < . . .  suf[SA[n-1]].
+The suffix array is a common data structure in string matching algorithms.
+The suffix array SA of S is a lexicicographically ordered array of integers of size n where each integer represents a suffix of S, so that suf[SA[0]] < suf[SA[1]] < . . . suf[SA[n-1]].
 
-Suffix tree applications.
+First introduced as space efficient alternative to suffix trees, the suffix array can fully replace the suffix tree with the use of additional data structures, such as the LCP array.
+Suffix arrays can be used to quickly find and match strings in a dictionary.
+This ability has a wide variety of applications from string searches to data compression to bioinformatics.
 
-Suffix tree talk.
-
-Various algorithms exist for the construction of suffix arrays. The skew algorithm of Kark \cite{ } uses a divide and conquer approach to construct a partial suffix array to infer the rest of the positions. Running in linear time, the skew algorithm has also been studied in parallel. The fastest known construction of suffix arrays on the GPU by Meo and Deeeley utilizes the skew algorithm. Our work is also a reimplementation and benchmark of that algorithm inspired by most of their ideas.
+There exist many suffix array construction algorithms (SACA).
+The skew algorithm of Kark \cite{ } uses a divide and conquer approach to construct a partial suffix array to infer the rest of the positions.
+The pseudocode of the SACA that we will use is presented in Figure.
+Essentially, the skew algorithm divides the suffixes into two groups.
+A suffix array is constructed using the larger group, which holds 2/3 of the suffixes.
+A quick check is used to see if these suffixes can be quickly sorted using their first three characters.
+If this sort does not create the suffix array, due to non-unique suffixes, then the algorithm recurses until the suffix array is constructed.
+The smaller group can then be sorted using inference and merged with the larger group.
+Running in linear time, the skew algorithm has also been studied in parallel.
+The fastest known construction of suffix arrays on the GPU by Meo and Deeeley utilizes the skew algorithm.
+Inspired by most of their ideas, our work is also a reimplementation and benchmark of their algorithm.
 
 \subsubsection{LCP and LPF Array}
 
-The LCP, longest common prefix, array is an auxiliary structure to the suffix array that provides the longest common prefix between successive suffixes in SA. Formally, position i in the LCP array, LCP[i] = lcp(suf[SA[i-1]],suf[SA[i]]).
+The LCP, longest common prefix, array is an auxiliary structure to the suffix array that provides the longest common prefix between successive suffixes in SA.
+Formally, position i in the LCP array, LCP[i] = lcp(suf[SA[i-1]],suf[SA[i]]).
+The LCP array can be expensive to compute, but recent algorithms have found that the LCP array can be constructed during the construction of the suffix array.
 
-The LPF, longest previous factor, array holds the lengths of the longest factors at any position i. In other words, LPF[i] holds the maximum lcp of suf[sa[i]] and all suffixes less than i.
+The LPF, longest previous factor, array holds the lengths of the longest factors at any position i.
+In other words, LPF[i] holds the maximum lcp of suf[sa[i]] and all suffixes less than i.
 
 \subsubsection{LZ Factorization Calculation}
 
-Previous works have computed the LPF array from the LCP array using ranged minimum queries. More recent works do a lazy computation.
+A naive LZ factorization algorithm may work by calculating the LPF for every position, by calculating the lcp with every previous suffix.
+It can be seen that this naive algorithm runs in O(n3) time.
+This can be bounded to O(n2) time using the knowledge that the total length of all lcp's is N.
+In \cite{ }, the number of positions that a suffix needs to be lcp against is reduced to the PSV and NSV.
+%todo talk about why
+We only need to check longer suffixes, number smaller, and only the closest ones since lexi order.
+The NSV, next smaller value, and PSV, previous smaller value, make up the ANSV, all nearest smaller values, problem.
+Computing the ANSV problem can be done linearly and sequentially using a stack-based algorithm found in CITE GABOW.
+This observation now reduces the problem to O(n) time.
 
-The lz factorization can be computed by following the lpf array.
+With these NSV and PSV arrays, a naive algorithm may try and calculate the LPF for every position.
+With the LPF array filled at every position, the LZ factorization can be quickly found \cite{ }.
+More recent LZ factorization algorithms have decided to forgo this intermediate step and directly calculate the LZ factorization.
+If we examine Table X, we can see that the LZ factorization of the string abbaabbbaaabab can be reduced to 8 positions.
+The positions where a factor does not begin, position 5 for example, does not need to calculate the LPF.
+It also does not need to calculate the ANSV, but that calculation is relatively inexpensive and may come from the generation of the other values anyway.
+Referred to as lazy LZ factorization in \cite{Linear Time Lempel-Ziv Factorization: Simple, Fast, Small}, the LPF value is only calculated at the start of a factor.
+The recent algorithms \cite{} make use of this fact for simplicity and speedup.
+Figure shows the basic pseudocode for calculating the LZ factorization given the PSV and NSV arrays using this lazy method.
+The PrevOcc array simply holds the position or suffix where the LPF occurs.
+
+Finally, the LZ factorization can be encoded simply with a position of previous occurence and the length of the match or a character, if the length is 0.
+It can also be encoded using the pair of position and previous occurance.
+Practical compression schemes might be encoded in triplets with the position, length, and the first letter of mismatch.
+
+\begin{figure}
+\begin{algorithmic}[1]
+\Procedure{LazyLZFactorization}{$S,n,PSV,NSV$}
+\State $i \gets 1$
+\While{$i \leq n$}
+\State a LZ factor starts here
+\If{$lcp(i,PSV) \geq lcp(i,NSV)$}
+\State LZ Factor = (PSV,lcp(i,PSV))\Comment{Pair (PrevOcc,LPF)}
+\Else
+\State LZ Factor = (NSV,lcp(i,NSV))
+\EndIf
+\State if LPF = 0, PrevOcc = -1, and the character is inserted
+\State $i \gets i + max(LPF,1)$\EndWhile
+\EndProcedure
+\end{algorithmic}
+\caption{LZ Factorization}\label{euclid}
+\end{figure}
+
+\section{Related Works}
+
+Lossless data compression on the GPU is a field that has yet to be fully investigated.
+Many lossless data compression algorithms are application specific.
+%“Parallel variablelength encoding on gpgpus,”
+
+Although few, there does exist work on porting general purpose lossless data compression algorithms to CUDA.
+CULZSS ports the LZSS algorithm, a sibling to LZ77, to the GPU with success.
+The key observation on these ports is the use of pipelining.
+Most if not all of these ports split up the data to run their individual algorithm on.
+Many of their original algorithms allow for this.
+Benefits can be found using CUDA streams to concurrently copy partial data and running kernels.
+This is a feature not available in LZ factorization.
+Many of these applications also make use of a sliding window, as seen in most LZ77 implementations.
+Don't know whole input.
+This could lead to larger compressed files.
+
+To the best of our knowledge, this is the first attempt to calculate the LZ factorization on the GPU.
+Although we will not be calculating the ideal LZ factorization, as described later, the knowledge of the whole input string is still utilized.
+The project by Jshun \cite{ } is a multicore CPU parallel implementation of the LZ factorization.
+They provide one of the first and most recent parallel implementations of the LZ factorization.
+They provide many of the inspirations throughout our project and implementation.
+In their project, they were able to show a O(n) work algorithm with significant speedups on a multicore CPU.
+Most of our implementation matches their's, except on the GPU; however, we do not calculate the whole LPF string, and make use of the lazy LZ factorization technique described earlier.
+The cost to calculate the ideal LZ factorization in a parallel fashion, as they did, was too great for GPU.
+Calculating every LPF position was a very memory intensive task that we found took too long on the GPU due to the high memory latency.
+This was the primary cause to the usage of the BLZ, which we'll describe later.
 
 % http://delivery.acm.org.ezproxy.lib.calpoly.edu/10.1145/2380000/2379781/a5-al-hafeedh.pdf?ip=129.65.23.208&id=2379781&acc=ACTIVE%20SERVICE&key=F26C2ADAC1542D74%2E2870C5A035FC0FDB%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35&CFID=343020533&CFTOKEN=37720775&__acm__=1400733002_66a60490d28a219a079b67ccd7c8315e
