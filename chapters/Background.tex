@@ -56,10 +56,53 @@ We decide to ignore these caveats in our implementation.
 
 \section{Compression}
 
-talk about compression and lempel ziv
-lossy vs lossless
+Compression, or more specifically data compression, is a field of computer science that is rich with applications.
+Compression allows us to reduce the size of the original data while still representing that original data.
+Compression techniques can be categorized as either lossless or lossy.
+Lossless compression tries to find repetitive or redundant patterns, while preserving all data allowing us to go back and forth from a compressed state to an uncompressed state without any data loss. 
+Lossless compression is often used to archive files but is also seen in many other fields, like genetics and executables.
+On the other hand, lossy compression tries to remove nonessential data from the source, often in a way that a human cannot even notice.
+In turn, this allows lossy compression to compress more than any lossless compression can since it is subjective what you can or cannot notice and how much is acceptable.
+Lossy compression algorithms, in contrast to lossless compression algorithms, do not preserve the original data, which now cannot be recreated.
+Some of the more common lossy compression algorithms are used as codecs to reduce video or audio sizes or as graphics formats.
+This includes household names like mp3 or jpeg.
+The focus of our work is on the Lempel-Ziv factorization, a lossless compression algorithm.
 
-\subsection{Lempel Ziv Factorization}
+Let's first take a step back and discuss some terminology involved in evaluating a compression algorithm.
+The ratio between the sizes of the original uncompressed file and the compressed file is referred to as the \textbf{compression ratio}.
+The compression ratio tells us how much smaller the file has become after compressing.
+A high compression ratio indicates that the compressed file is much smaller than the original.
+Next, the \textbf{compression speed} is how long it takes for a compression algorithm to run.
+There is often a tradeoff between the compression ratio and compression speed.
+Usually, having a faster compression algorithm may result in or is caused by having a smaller compression ratio.
+This works both ways.
+It is important to note that different users might have different requirements, leading them to choose for one over the other.
+
+\subsection{Lempel-Ziv}
+
+The seminal work on the Lempel-Ziv lossless compression algorithms is the original paper authored by Lempel and Ziv in 1977\cite{ }. 
+Their work, LZ77, used built their final compressed output, called the LZ77 LZ factorization, by matching with previously parsed input.
+LZ77 is used in combination with Huffman coding to form the popular DEFLATE algorithm\cite{ }.
+The DEFLATE algorithm is widely implemented and used; some of the most popular implementations include gzip, 7zip, zip, and the PNG file format.
+Lempel and Ziv later tweaked their algorithm into LZ78 which instead provided an explicit dictionary that could be used for random lookup during decompression\cite{ziv1978compression}.
+LZ77 and LZ78 would become the basis for a whole family of lossless data compression algorithms.
+Welch's work, LZW, improved the space efficiency of LZ78 by removing redundant characters and introducing variable encoding\cite{welch1984technique}.
+LZW is used today in Unix compress and in the GIF image format.
+LZSS improves on LZ77 by ensuring that the references replacing redundant symbols are indeed shorter than what they are replacing\cite{lzss}.
+Today, it is used in popular archivers such as PKZip and RAR.
+Other variants, including LZMA and LZJB, change some aspect of the original algorithm to increase compression speed or the compression ratio.
+The focus of our thesis is on LZ77, and its LZ factorization.
+
+Practical implementations of LZ77 use a sliding window buffer, a small section of the overall input, where the algorithm operates on a longer factored prefix and a short unfractored suffix.
+In practice, it has shown that using the sliding window produces comparable compression ratios while greatly increasing compression speed.
+We decide to calculate the LZ factorization of the entire string instead of just a window.
+In actuality, our final implementation is a compromise between these two.
+Throughout the paper, we will mix and match the terms, LZ77 LZ factorization, LZ factorization, and ideal LZ factorization.
+The LZ77 LZ factorization and ideal LZ factorization refer to the LZ factorization of the whole string.
+In almost all cases, the term LZ factorization will also refer to the ideal LZ factorization.
+We will now describe and define the LZ factorization of a string.
+
+\subsection{Lempel-Ziv Factorization}
 
 The LZ factorization of a string S[n] decomposes S into factors S = w1w2wk where k<=n, where each factor wi is either the longest factor that appears left of wi in S or is a new character.
 For example, the LZ factorization of string abbaabbbaaabab has the factorization a.b.b.a.abb.baa.ab.ab.
