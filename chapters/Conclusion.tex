@@ -1,0 +1,12 @@
+\chapter{Conclusion}
+
+We have presented an algorithm and implementation to calculate the Lempel-Ziv factorization on the GPU.
+Our algorithm requires O(n) work and O(time).
+We show the usage of BLZ in the calculation of the LZ factorization.
+Although this removed our ability to calculate the ideal LZ factorization that would be calculated in a traditional sequential algorithm, we found that using the BLZ found significant speedups on the GPU, incurring a space cost of at most .01 percent.
+Using the BLZ, although not calculating the most space efficient ideal LZ factorization, could work well in a more practical environment.
+
+We have also presented a reimplementaion and reevaluation of the GPU suffix array construction algorithm of Deo and Meely \cite{}.
+With the use of GPU libraries and parallel primitives, we were able to replicate their OpenCL results using CUDA on a NVIDIA GPU.
+On files greater than 10 mb, we found at least a 3-4x speedup over the fastest CPU implementations.
+This suffix array algorithm and implementation have many applications outside of data compression, most notably in bioinformatics.

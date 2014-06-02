@@ -1,0 +1,195 @@
+\chapter{Results}
+
+\section{Experimental Setup}
+\subsection{Test Machine}
+K40
+Timings done cuda events
+
+\subsection{Data}
+
+Talk about datasets
+
+\subsection{Validation}
+
+Talk about compare to cpu implementations to validate
+
+\section{Suffix Array}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/chart2.png}
+\caption{The basic structure of the graphics pipeline. Note the vertex processor, rasterizer, fragment processor, and termination in a frame buffer. Image taken from  \protect\cite{pipeline-image-ref}}
+\label{fig:graphics-pipelinei2}
+\end{figure}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/saprofile.png}
+\caption{The basic structure of the graphics pipeline. Note the vertex processor, rasterizer, fragment processor, and termination in a frame buffer. Image taken from  \protect\cite{pipeline-image-ref}}
+\label{fig:graphics-pipeline3}
+\end{figure}
+
+\begin{table}[h]
+\begin{tabular}{@{}llll@{}}
+\toprule
+size      & name      & gpu    & ms per input \\ \midrule
+53161     & paper1    & 16     & 0.301        \\
+111261    & bib       & 21.2   & 0.191        \\
+377109    & news      & 36.8   & 0.098        \\
+448779    & mj        & 30.9   & 0.069        \\
+509519    & hi        & 36.1   & 0.071        \\
+3295751   & hs        & 130.6  & 0.040        \\
+4047392   & bible.txt & 141.5  & 0.035        \\
+10192446  & dickens   & 353.5  & 0.035        \\
+21606400  & samba     & 693    & 0.032        \\
+39422105  & howto     & 1339.7 & 0.034        \\
+51220480  & mozilla   & 1642.6 & 0.032        \\
+69728899  & jdk13c    & 2525.4 & 0.036        \\
+104201579 & w3c2      & 3840.8 & 0.037        \\ \bottomrule
+\end{tabular}
+\end{table}
+
+The evaluation of the suffix array is actually a evaluation  of a reimplementation of the fastest known GPU suffix array construction algorithm (SACA) by Deo and Meely\cite{ }.
+The benefits and applications of the suffix array has already been detailed in chapter . . .
+Deo and Meely's evaluation was done on an AMD Radeon GPU using OpenCL.
+Our results on a NVIDIA GPU using CUDA and CUB primitives with ModernGPU's merge path method to mergesort are not expected to be significantly different.
+We will be comparing out results to a set of SACA benchmarks found on the libdivsufsort wiki.
+That benchmark compares the fastest CPU SACA implementations on a variety of test files.
+We will compare our GPU implementaion against the fastest CPU time for each file.
+Files were picked to match closely with Deo and Meely's evaluation.
+GPU times include parsing the file, transfering the data both ways, and the construction of the suffix array.
+
+.Figure presents the results comparing the CPU implementations to our GPU implementation.
+The first thing to note is that the CPU SACA benchmarks are significantly faster than those used by Deo and Meely.
+Our GPU implementation did not see the speedup of 35x that theirs did, but we still found around a 3-4x speedup for most files.
+We did not have their implementation or their raw result data to compare against.
+Comparing with the charts in their paper though, we find that our GPU implementation is at least on par if not faster.
+
+Another interesting metric is the runtime in microseconds per input symbol seen in \cite{ }.
+We found that after a certain point, our GPU implementation was achieving rates of around .03 to .04 ms per input symbol.
+
+Like many other GPU algorithms, we found that smaller files did not see the greater speedups that larger files did.
+The likely cause is that smaller files cannot fully saturate the GPU, and the cost of intialization and data transfer could not be hidden by increased computations.
+This indicates that the GPU is not the all around solution for faster suffix arrays and the size of the input needs to be considered.
+
+.Figure shows a profile of the SACA of the GPU implementation.
+Kernels other than those involved in the merging or sorting take the greatest percentage of time in both examples.
+These kernels have the most room for improvement, since they are less likely to deal with primitives and more likely deal with the setup and movement of data.
+The CUDA grid and block sizes could have a greater factor in the speeds and further optimization are more likely to see gains here.
+
+aug 24 2008
+
+\section{ANSV}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/ansvsize.png}
+\caption{The basic structure of the graphics pipeline. Note the vertex processor, rasterizer, fragment processor, and termination in a frame buffer. Image taken from  \protect\cite{pipeline-image-ref}}
+\label{fig:graphics-pipeline}
+\end{figure}
+
+As discussed in chapter X, the ANSV algorithm divides the suffix array into chunks for each thread.
+These threads will then individually solve the ANSV problem on their chunk and solve any outliers using a preconstructed binary tree.
+
+Figure X shows the impact of changing the chunk size in the ANSV generation.
+For our setup we can see a noticeable speedup at a chunk size of 4.
+The chunk size of 4 is not a universal speedup for all NVIDIA GPUs.
+Altough not presented in this paper, a NVIDIA GT 650M found speedups at a much greater chunk size.
+Different hardware have different memory latencies and other costs.
+I'll discuss this further in a future section.
+
+Figure shows a profile of the ANSV generation in the two main steps, the construction of the binary tree and the chunk processing with a chunk size of 4. 
+The construction of the min tree was no more than 4 percent of the overall ANSV generation.
+Several future optimizations were discussed earlier for the min tree, but seeing as it is only a small percentage of the overall runtime, time is probably better spent somewhere else.
+See Amdahl's law \cite{ }.
+The bigger chunk of the runtime is in the chunk processing, as expected.
+
+ms per input - ansv
+
+\section{BLZ}
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/chart.png}
+\caption{The basic structure of the graphics pipeline. Note the vertex processor, rasterizer, fragment processor, and termination in a frame buffer. Image taken from  \protect\cite{pipeline-image-ref}}
+\label{fig:graphics-pipeline}
+\end{figure}
+
+\begin{table}[h]
+\begin{tabular}{llllllllllll}
+name             & size  & total  & lz-og & lz-ansv & plz3 & speedup og & speedup ansv & speedup plz & lz      & BLZ     & percent error \\
+10Mrandom.lpf    & 9.5   & 371.1  & 4670  & 3970    & 437  & 12.58      & 10.70        & 1.18        & 1426311 & 1426496 & 0.013         \\
+chr22.dna.lpf    & 33.0  & 1385.8 & 22000 & 19400   & 1570 & 15.88      & 14.00        & 1.13        & 2461478 & 2461728 & 0.010         \\
+howto.txt.lpf    & 37.6  & 1620.3 & 25500 & 39400   & 1820 & 15.74      & 24.32        & 1.12        & 3063929 & 3064227 & 0.010         \\
+jdk13c.lpf       & 66.5  & 2940   & 41400 & 40400   & 2860 & 14.08      & 13.74        & 0.97        & 1209676 & 1210015 & 0.028         \\
+wikisamp.xml.lpf & 95.4  & 4304.2 & 61400 & 59900   & 4030 & 14.27      & 13.92        & 0.94        & 2888810 & 2889040 & 0.008         \\
+w3c2.lpf         & 99.4  & 4988.5 & 84100 & 63100   & 4420 & 16.86      & 12.65        & 0.89        & 2340638 & 2341016 & 0.016         \\
+etext99.lpf      & 100.4 & 5182   & 75200 & 69900   & 4800 & 14.51      & 13.49        & 0.93        & 8306413 & 8306658 & 0.003         \\
+sprot34.dat.lpf  & 104.5 & 5210.9 & 72200 & 69000   & 4600 & 13.86      & 13.24        & 0.88        & 6395921 & 6396224 & 0.005         \\
+rctail96.lpf     & 109.4 & 5227.3 & 96500 & 70000   & 4770 & 18.46      & 13.39        & 0.91        & 3905843 & 3906149 & 0.008         \\
+rfc.lpf          & 111.0 & 5474   & 76600 & 72800   & 4830 & 13.99      & 13.30        & 0.88        & 5656068 & 5656367 & 0.005        
+\end{tabular}
+\end{table}
+
+To directly compare the generation of BLZ to algoritms and implementations generating the ideal LZ factorization would be unfair.
+The outputs are totally different, as the BLZ has lost an important property of the ideal LZ factorization, the LPF.
+The LPF in the BLZ are no longer the longest, as discussed in our implementation.
+What can be done is a relative comparison to previous implementations.
+We will present the percent increase of the BLZ from the LZ factorization to help in the evaluation.
+
+The data set and CPU benchmarks will be taken directly from the results in \cite{ }. 
+Specifically, we will compare our results to their benchmarks of LZ-OG, the most time efficient algorithm as seen in \cite{ }, LZ-ANSV, the sequential algorithm which computes the LZ factorization without every LPF value using lazy LZ factorization, and their contribution PLZ3, a parallel CPU algorithm where much of our inspriration comes from, using 40 cores with hyper-threading.
+LZ-ANSV is the closest sequential algorithm after the ANSV generation, while the ANSV generation algorithm comes from PLZ3.
+
+The first and most important metric to look at is how the BLZ block size affects the final LZ factorization size.
+If the percent increase, which we will now call percent error, is too great, then the usage of BLZ is unacceptable.
+What percent error is too great is a judgement that must be made by each user, as each user will have their own requirements.
+To pick the different block sizes, I decided to use number of divisions as the parameter, although I could have used the actual block size as mentioned before.
+More specifically I used multiples of the number of SMs (15).
+To try and get a good spread I used powers of 2 to multiply.
+
+The second most important metric is how the block sizes affect the runtimes. 
+Since the suffix array construction and the ANSV generation are unrelated, we will keep our focus on the LPF time.
+This time assumes the suffix array and ANSV arrays are already present on GPU memory.
+It includes the generation of the necessary LPF and prevocc arrays, the isolation of the needed values using CUB's deviceSelect, and the data copy of those values back to the CPU.
+Many LZ factorization papers evaluate the runtime of their algorithm starting after the suffix array is in memory.
+We will consider that runtime later.
+
+Figure XX presents the results with these two metrics together.
+We show the effect of percent error and runtime as a function of the number of divisions.
+The key difference is A is geometric while B is linear.
+We have included averages as a convenience.
+First, we notice that the percent error grows linearly with the number of divisions.
+This trend is intuitive as each extra division has a chance to increase the final BLZ length if the division boundary occurs between the ideal LZ factorization.
+Next, we notice that the runtimes generally decreases rapidly as we increase the number of divisions.
+At some point however, the rapid decreases stops and increasing the divisions further does not have as much effect on the runtime.
+As we can see in figure XX, this occurs at around 480 divisions with an average of 378.3 ms.
+At this point, the percent error averages around .01 percent.
+For some perspective, a file that compresses to 1 Mb using the ideal LZ factorization would require an additional 105 bytes using BLZ.
+As we increase the number of divisions from 480 to 30720, the runtime only decreases 31 percent to 262.1 ms.
+Meanwhile, that increase increases the percent error over 150 percent to 1.54 percent error.
+Further increases of the number of divisions might actually begin to slowly increase the runtime, as we see the average increases ever so slightly to 262.6 ms when we double the divisions to 61440.
+We will now deem this .01 percent error acceptable and use these values as we continue the evaluation.
+
+talk analysis
+
+We now take a look at how our GPU implementation compares to the CPU LZ factorization implementations mentioned earlier.
+Table X tabulates the results and speedups found in our experiments.
+Our GPU implementation outperforms LZ-OG and LZ-ANSV on all the data sets.
+Our implementation sees speedups between 12x and 18x compared to LZ-OG and speedups between 10x and 14x compared to LZ-ANSV.
+When compared to the 40 core PLZ3 implementation, our GPU implementation performs relatively similar with speedups or slowdowns no more than 1.2x.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/allprof.png}
+\caption{The basic structure of the graphics pipeline. Note the vertex processor, rasterizer, fragment processor, and termination in a frame buffer. Image taken from  \protect\cite{pipeline-image-ref}}
+\label{fig:graphics-pipeline}
+\end{figure}
+
+Figure X shows a profile of the three main sections of our implementation, the SA, the ANSV, and the LZ.
+The majority of our implementation, like most LZ factorization implementations, spend most of their time constructing the suffix array.
+The suffix array construction takes on average 81 percent of the overall time.
+
+Excluded highly compressable.
+
+Comparison to gpu doesnt make sense.
