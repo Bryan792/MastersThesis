@@ -1,11 +1,11 @@
 \chapter{Implementation}
+\label{chap:implementation}
 
 There exists three main steps in my implementation, the construction of the suffix array, the calculation of ANSV for every index, and finally the generation of the LZ factorization.
 
 \section{SA}
 
-
-\begin{figure}
+\begin{figure}[h]
 \begin{algorithmic}[1]
 \Procedure{computeSA}{$s,sa,n$}
 \State initMod12();\Comment{Kernel to set flags at 2/3. DeviceSelect to get s12,sa12}
@@ -23,93 +23,10 @@ There exists three main steps in my implementation, the construction of the suff
 \State mergeSort($s0,s12$);\Comment{Merge Path + Merge Sort} 
 \EndProcedure
 \end{algorithmic}
-\caption{Suffix Array Construction Pseudocode from \cite{ }. Comments add details from our implementation.}
-\label{euclid}
+\caption{Suffix Array Construction Pseudocode from \cite{Deo}. Comments add details from our implementation.}
+\label{algorithm:sa}
 \end{figure}
 
-\begin{figure}
-\begin{algorithmic}[1]
-\Procedure{ANSV}{}
-\For{each level of MinTree}\Comment{Bottom Up Construction}
-\State MinTree($level$);\Comment{Build level by calculating minima of children}
-\EndFor
-\State ANSVKernel($mintree,chunkSize$)
-\EndProcedure
-\end{algorithmic}
-\begin{algorithmic}[1]
-\Procedure{ANSVKernel}{}
-\State $chunk \gets threadID * chunkSize$\Comment{Each thread gets a unique chunk}
-\State ANSVLinear($chunk$)
-\If($chunk$ detects no PSV/NSV)\Comment{ANSVLinear may be wrong}
-\State checkMinTree($mintree$)\Comment{Manually check MinTree}
-\EndIf
-\EndProcedure
-\end{algorithmic}
-\caption{ANSV Generation}
-\end{figure}
-
-\begin{table}[h]
-\begin{tabular}{llll}
-sa & suf-lex        & nsv-lex & psv-lex \\
-8  & aaabab         & 3       & -1      \\
-9  & aabab          & 3       & 8       \\
-3  & aabbbaaabab    & 0       & -1      \\
-12 & ab             & 10      & 3       \\
-10 & abab           & 0       & 3       \\
-0  & abbaabbbaaabab & -1      & -1      \\
-4  & abbbaaabab     & 2       & 0       \\
-13 & b              & 7       & 4       \\
-7  & baaabab        & 2       & 4       \\
-2  & baabbbaaabab   & 1       & 0       \\
-11 & bab            & 6       & 2       \\
-6  & bbaaabab       & 1       & 2       \\
-1  & bbaabbbaaabab  & -1      & 0       \\
-5  & bbbaaabab      & -1      & 1      
-\end{tabular}
-\end{table}
-
-\begin{table}[h]
-\begin{tabular}{lllllllll}
-i  & S{[}i{]} & nsv-lex & nsv-match & psv-lex & psv-match & LPF{[}i{]} & PrevOcc{[}i{]} & LZ \\
-0  & a        & -1      & -         & -1      & 0         & -1         & 0              &    \\
-1  & b        & -1      & -         & 0       & -         & 0          & -1             & 1  \\
-2  & b        & 1       & b         & 0       & -         & 1          & 1              & 2  \\
-3  & a        & 0       & a         & -1      & -         & 1          & 0              & 3  \\
-4  & a        & 2       & -         & 0       & abb       & 3          & 0              & 4  \\
-5  & b        & -1      & -         & 1       & bb        & 2          & 1              & -  \\
-6  & b        & 1       & bbaa      & 2       & bb        & 4          & 1              & -  \\
-7  & b        & 2       & baa       & 4       & -         & 3          & 2              & 7  \\
-8  & a        & 3       & aa        & -1      & -         & 2          & 3              & -  \\
-9  & a        & 3       & aab       & 8       & aa        & 3          & 3              & -  \\
-10 & a        & 0       & ab        & 3       & a         & 2          & 0              & 10 \\
-11 & b        & 6       & b         & 2       & ba        & 2          & 2              & -  \\
-12 & a        & 10      & ab        & 3       & a         & 2          & 10             & 12 \\
-13 & b        & 7       & b         & 4       & -         & 1          & 7              & - 
-\end{tabular}
-\end{table}
-
-\begin{table}[h]
-\begin{tabular}{llllll}
-i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\
-0  & a        & -1         & -1         & 0          & 0  \\
-1  & b        & -1         & 0          & 0          & 1  \\
-2  & b        & 1          & 0          & 1          & 2  \\
-3  & a        & 0          & -1         & 1          & 3  \\
-4  & a        & 2          & 0          & 3          & 4  \\
-5  & b        & -1         & 1          &            &    \\
-6  & b        & 1          & 2          &            &    \\
-   &          &            &            &            &    \\
-7  & b        & 2          & 4          & 3          & 7  \\
-8  & a        & 3          & -1         &            &    \\
-9  & a        & 3          & 8          &            &    \\
-10 & a        & 0          & 3          & 2          & 10 \\
-11 & b        & 6          & 2          &            &    \\
-12 & a        & 10         & 3          & 2          & 12 \\
-13 & b        & 7          & 4          &            &   
-\end{tabular}
-\end{table}
-
-% Please add the following required packages to your document preamble:
 \begin{table}[h]
 \begin{tabular}{@{}llllll@{}}
 \toprule
@@ -131,10 +48,9 @@ i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
 13 & b        & 7          & 4          &            &    \\ \bottomrule
 \end{tabular}
 \caption{Split=7,LZ=8}
+\label{table:example7}
 \end{table}
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
 \begin{table}[h]
 \begin{tabular}{@{}llllll@{}}
 \toprule
@@ -158,11 +74,9 @@ i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
 13 & b        & 7          & 4          & -          & -  \\ \bottomrule
 \end{tabular}
 \caption{Split=4,LZ=9}
-\label{my-label}
+\label{table:example4}
 \end{table}
 
-% Please add the following required packages to your document preamble:
-% \usepackage{booktabs}
 \begin{table}[h]
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -186,12 +100,12 @@ i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & PrevOcc{[}i{]} & LPF{[}i{]} & LZ \\ \m
 12 & a        & 10         & 3          & 10             & 2          & 12 \\
 13 & b        & 7          & 4          & -              & -          & -  \\ \bottomrule
 \end{tabular}
-\label{my-label}
 \caption{Split=3,LZ=8}
+\label{table:example3}
 \end{table}
 
-The construction of the suffix array stays true to the algorithm used by deo and meely \cite{ }.
-The pseudocode for the skew algorithm is presented in.
+The construction of the suffix array stays true to the algorithm used by deo and meely \cite{Deo}.
+The pseudocode for the skew algorithm is presented in table \ref{table:sa}.
 Smaller individual kernels can be used to first.
 
 To sort the partial suffixes using radix sort, I used the CUB implementation of radix sort.
@@ -204,7 +118,29 @@ ModernGPU merge sort
 
 \section{ANSV}
 
-To calculate the needed ANSV values I used the parallel algorithm from jshun \cite{ }.
+\begin{figure}
+\begin{algorithmic}[1]
+\Procedure{ANSV}{}
+\For{each level of MinTree}\Comment{Bottom Up Construction}
+\State MinTree($level$);\Comment{Build level by calculating minima of children}
+\EndFor
+\State ANSVKernel($mintree,chunkSize$)
+\EndProcedure
+\end{algorithmic}
+\begin{algorithmic}[1]
+\Procedure{ANSVKernel}{}
+\State $chunk \gets threadID * chunkSize$\Comment{Each thread gets a unique chunk}
+\State ANSVLinear($chunk$)
+\If($chunk$ detects no PSV/NSV)\Comment{ANSVLinear may be wrong}
+\State checkMinTree($mintree$)\Comment{Manually check MinTree}
+\EndIf
+\EndProcedure
+\end{algorithmic}
+\caption{ANSV Pseudocode}
+\label{algorithm:ansv}
+\end{figure}
+
+To calculate the needed ANSV values I used the parallel algorithm from Shun and Zhao\cite{shun2013practical}.
 
 The first step is to build a balanced binary tree, where the leaves are elements from SA, and the ancestors are the minima of their children.
 Although more efficient algorithms may exist, I decide to take a simpler naive approach and launch a kernel at each level.
@@ -231,6 +167,8 @@ Instead, my work will also employ the lazy LZ factorization, mentioned in \cite{
 The biggest problem with the lazy LZ factorization was that it is incredibly sequential.
 Since it is impossible to know what entries will exist in future points in the LZ factorization, it is a hard problem to parallelize.
 
+\subsection{BLZ}
+
 I propose breaking away from the ideal LZ factorization and using a BLZ.
 I define the ideal LZ factorization to be the original LZ factorization, calculated by starting at the first character and greedily solving the problem from left to right.
 This LZ factorization would be what is calculated from the original sequential algorithm, and should be the absolute best, hence ideal.
@@ -242,7 +180,7 @@ By doing this, I am also able to limit the amount of work any one thread will do
 There are several disadvantages that may appear, all of which depend on the original input string.
 There is a chance for the BLZ LZ factorization to be larger than the ideal LZ factorization.
 There is also an unlikely chance for them to be exactly the same.
-I would like to explain the different scenarios to you with an anology.
+I would like to explain te different scenarios to you with an anology.
 
 Let's imagine the LZ factorization of a string to be a stairway with floors.
 Generating the LZ factorization is like constructing said stairway and floors.
@@ -255,8 +193,6 @@ When you are on a floor, you, the builder, walk up a stair for each match.
 When the LPF no longer matches, you put a floor to represent a new entry and repeat.
 In the end, the number of stairs should match the number of original characters, and the number of floors represent the length of the ideal LZ factorization.
 
-thm: The BLZ LZ factorization >= ideal.
-proof:
 Now we'll look at what happens when we use BLZ to parallelize the problem.
 First, we remove all the floors.
 Next, to split up the input, we insert ground floors at regular intervals.
@@ -270,7 +206,7 @@ The BLZ factorization is then exactly the same as the ideal LZ factorization.
 
 The next scenarios occurs when the inserted ground floors are inserted in between existing floors from the ideal.
 When this happens, the BLZ LZ factorization is automatically increased by at least one, from the new ground floor.
-The LPF of the previous floor is no longer the longest it can be.
+The LPF of the previous floor is no longer the longest it can be, since we stop the matching at the end of the chunk.
 This also limits the maximum offset for any offset to be the chunk size.
 This new ground floor now performs the sequential algorithm as always.
 The next floor that is inserted by the builder may or may not be where a floor existed.
@@ -281,12 +217,44 @@ At that point onward, the BLZ LZ factorization again matches with the ideal.
 The next question to be answered is deciding the chunk size. 
 A larger chunk size could reduce the chances for a larger factorization and increase compression ratios.
 On the other hand, a smaller chunk size would more evenly distribute the work among the GPU threads, and in turn should increase compression speeds.
-This is a tradeoff that should be left to the user, in my opinion.
+This is a tradeoff that should be left to the user.
 In my implementation, I have the option to use arbitrary sizes or even divisions of the input.
 Some optimal sizes might be divisions of the input of multiples of the number of multiprocessors.
 In any case, it is impossible to predict the compression ratio, and different people will have different priorities.
 
-One thing that I did have yet to cover is how we perform the string match.
+Table \ref{table:example7}, \ref{table:example4}, and \ref{table:example3} show the resulting LZ factorization when using BLZ with chunk sizes of 7, 4, and 3 respectively. 
+These chunk sizes, from a string size n=14, can result from divisions of d = 2, 4, 5.
+Table \ref{table:allsolved} can be used as reference with the whole LPF and PrevOcc arrays filled.
+First note that the LPF and PrevOcc arrays are not totally filled.
+As we are doing a lazy LZ factorization, not all values need to be computed, and this is shown accordingly.
+Next, notice that there are breaks within the table.
+These indicate chunks for a single thread, or block as we'll see soon, to work on.
+The next thing to notice are the bold elements in the LPF array.
+A bold element indicates that the value is no longer the LPF at that position and are changed from the reference LPF values.
+Recall that when using BLZ, the string matching stops at the end of a chunk.
+
+In table \ref{table:example7} with a chunk size of 7 and a divison of 2, we can see that there are no changes in the LZ factorization.
+The split occured at position i = 7, the beginning of a factor in the ideal LZ factorization.
+Therefore, we see no changes while being able to solve the problem in parallel.
+
+Table \ref{table:example4} and \ref{table:example3} will begin to show changes from the ideal LZ factorization.
+In table \ref{table:example4}, we use a chunk size of 4 and a division of 4.
+Notice how the third chunk starts at position 8.
+Because the ideal LZ factorization did not have a factor starting at position 8, it can be determined that the BLZ LZ factorization is no longer the same as the LZ factorization.
+The LPF at position 8 is 2, so that the next factor starts at position 10.
+The ideal LZ factorization had a factor starting at position 10, so we are now back on track.
+Any additional factors calculated from this chunk should match that of the ideal LZ factorization.
+The resulting BLZ LZ factorization has a length of l=9, 1 more than the ideal LZ factorization length of l=8;
+
+The last example in table \ref{table:example3} shows a chunk size of 3 and a division of 5.
+Notice again that chunks 2 and 3, starting at positions 6 and 9 respectively, have a different factor from the ideal LZ factorization.
+A key thing to realize from this example is that the length is unchanged.
+Both the BLZ LZ factorization and the LZ factorization have a length, l=8.
+By using BLZ, we were able to split the work into 5 to be worked on in parallel and compress the string to the same length as the ideal LZ factorization.
+
+\section{More LZ Factorization Optimizations}
+
+One thing that I have yet to cover is how we perform the string match.
 The naive operation is to do a character by character match until the prefix no longer matches with the LPF.
 One optimization that I have implemented is to instead do a parallel string comparison.
 A block of threads can load a group of characters into shared memory.
@@ -301,9 +269,11 @@ If there exist a mismatch, the index of the mismatch is instead returned to the 
 Which implementation is faster is soley dependent on the data and the average factor length.
 Average factor lengths less than the number of characters loaded and compared in parallel may see faster speeds with just the naive comparisons.
 My implementation will use the parallel string comparison for evaluation.
+In doing so, each chunk is worked on by a single block.
 
-Finally, it is shown how we can calculated the LPF. 
-Because the LPF can occur at either the PSV or the NSV, we need to check both and pick the longer as mentioned before. 
-Reaching the edge of the boundary of a chunk in the first search allows us to skip the second search.When the longer is found, we can insert that into a prevocc array. 
+Finally because we are cutting off the matching at the end of the chunk, an optimization can be made to reduce the number of searches.
+Because the LPF can occur at either the PSV or the NSV, we usually need to check both and pick the longer. 
+Reaching the edge of a chunk during the first search allows us to skip the second chunk.
 
-The final LZ factorization, made up of relevant entries from the LPF and prevocc arrays, can be gathered by using the DeviceSelect and CudaMemcpy.
+The final LZ factorization, made up of relevant entries from the LPF and PrevOcc arrays, can be gathered by using CUB's DeviceSelect, which allows us to compact the arrays using a flag set at the start of each factor.
+This allows our final data transfer to require sending less data.
