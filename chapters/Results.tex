@@ -3,10 +3,13 @@
 
 \section{Experimental Setup}
 \subsection{Test Machine}
-All measurements were gathered from a single machine with an NVIDIA Tesla K40c.
-The Tesla K40c is one of NVIDIA's higher end solution with 2880 CUDA cores and 12 GB of memory.
+All measurements were gathered from a single machine with an NVIDIA Tesla K40c and NVIDIA GTX TITAN Black.
+The Tesla K40c and GTX TITAN Black are two of NVIDIA's higher end solutions.
+The GTX TITAN Black, which we'll now refer to as Black, has a 0.98 GHz GPU clock rate, 3.5 GHz memory clock rate, and 6 GB of memory.
+The Tesla K40c, now K40c, has a 0.88 GHz GPU clock rate, 3.0 GHz memory clock rate, and 12 GB of memory.
+The Black is faster than the K40c, but has significantly less memory.
 Both the CUDA runtime and driver version were 6.0.
-The binary was compiled using O3 and compute capability 2.0.
+The binary was compiled using -O3 optimization and compute capability 2.0.
 Timings were recorded using the CUDA events api.
 
 \subsection{Data}
@@ -27,6 +30,7 @@ Talk about compare to cpu implementations to validate
 \end{figure}
 
 \begin{table}[h]
+\centering
 \begin{tabular}{@{}llll@{}}
 \toprule
 size      & name      & gpu    & ms per input \\ \midrule
@@ -34,7 +38,7 @@ size      & name      & gpu    & ms per input \\ \midrule
 111261    & bib       & 21.2   & 0.191        \\
 377109    & news      & 36.8   & 0.098        \\
 448779    & mj        & 30.9   & 0.069        \\
-509519    & hi        & 36.1   & 0.071        \\
+509519    & hwe        & 36.1   & 0.071        \\
 3295751   & hs        & 130.6  & 0.040        \\
 4047392   & bible.txt & 141.5  & 0.035        \\
 10192446  & dickens   & 353.5  & 0.035        \\
@@ -60,7 +64,7 @@ GPU times include parsing the file, transfering the data both ways, and the cons
 
 Figure \ref{fig:saresult} presents the results comparing the CPU implementations to our GPU implementation.
 The first thing to note is that the CPU SACA benchmarks are significantly faster than those used by Deo and Meely.
-Our GPU implementation did not see the speedup of 35x that theirs did, but we still found around a 4-5x speedup for most files.
+Our GPU implementation did not see the speedup of 35x that theirs did, but we still found around a 4-5x speedup for most files for Black.
 We did not have their implementation or their raw result data to compare against.
 Loosely comparing with the charts in their paper though, we find that our GPU implementation is at least on par if not faster.
 
@@ -111,17 +115,18 @@ The bigger chunk of the runtime is in the chunk processing, as expected.
 
 ms per input - ansv
 
-\section{BLZ}
+\section{PLZ}
 \begin{sidewaysfigure}[ht!]
 \centering
 \includegraphics[width=1.0\textwidth]{images/chart.png}
-\caption{The effects of chunk size on percent error and runtimes}
+\caption{The effects of chunk size on percent increase and runtimes}
 \label{fig:lzchart}
 \end{sidewaysfigure}
 
 \begin{table}[h]
+\centering
 \begin{tabular}{llllllllllll}
-name             & size  & total  & lz-og & lz-ansv & plz3 & speedup og & speedup ansv & speedup plz & lz      & BLZ     & percent error \\
+name             & size  & total  & lz-og & lz-ansv & plz3 & speedup og & speedup ansv & speedup plz & lz      & PLZ     & percent increase \\
 10Mrandom.lpf    & 9.5   & 371.1  & 4670  & 3970    & 437  & 12.58      & 10.70        & 1.18        & 1426311 & 1426496 & 0.013         \\
 chr22.dna.lpf    & 33.0  & 1385.8 & 22000 & 19400   & 1570 & 15.88      & 14.00        & 1.13        & 2461478 & 2461728 & 0.010         \\
 howto.txt.lpf    & 37.6  & 1620.3 & 25500 & 39400   & 1820 & 15.74      & 24.32        & 1.12        & 3063929 & 3064227 & 0.010         \\
@@ -133,26 +138,26 @@ sprot34.dat.lpf  & 104.5 & 5210.9 & 72200 & 69000   & 4600 & 13.86      & 13.24 
 rctail96.lpf     & 109.4 & 5227.3 & 96500 & 70000   & 4770 & 18.46      & 13.39        & 0.91        & 3905843 & 3906149 & 0.008         \\
 rfc.lpf          & 111.0 & 5474   & 76600 & 72800   & 4830 & 13.99      & 13.30        & 0.88        & 5656068 & 5656367 & 0.005        
 \end{tabular}
-\caption{Sizes, runtimes, and speedups of datasets for evaluation of LZ factorization. GPU implementation uses BLZ with 480 divisions}
+\caption{Sizes, runtimes, and speedups of datasets for evaluation of LZ factorization. GPU implementation uses PLZ with 480 divisions}
 \label{tab:lzdata}
 \end{table}
 
-To directly compare the generation of BLZ to algoritms and implementations generating the ideal LZ factorization would be unfair.
-The outputs are totally different, as the BLZ has lost an important property of the ideal LZ factorization, the LPF.
-The LPF in the BLZ are no longer the longest, as discussed in our implementation.
+To directly compare the generation of PLZ to algoritms and implementations generating the ideal LZ factorization would be unfair.
+The outputs are totally different, as the PLZ has lost an important property of the ideal LZ factorization, the LPF.
+The LPF in the PLZ are no longer the longest, as discussed in our implementation.
 What can be done is a relative comparison to previous implementations.
-We will present the percent increase of the BLZ from the LZ factorization to help in the evaluation.
+We will present the percent increase of the PLZ from the LZ factorization to help in the evaluation.
 
 The data set and CPU benchmarks will be taken directly from the results in \cite{ }. 
-Specifically, we will compare our results to their benchmarks of LZ-OG, the most time efficient algorithm as seen in \cite{ }, LZ-ANSV, the sequential algorithm which computes the LZ factorization without every LPF value using lazy LZ factorization, and their contribution PLZ3, a parallel CPU algorithm where much of our inspriration comes from, using 40 cores with hyper-threading.
+Specifically, we will compare our results to their benchmarks of LZ-OG, the most time efficient algorithm as seen in \cite{ }, LZ-ANSV, the sequential algorithm which computes the LZ factorization without every LPF value using lazy LZ factorization, and their contribution PLZ3, their parallel CPU algorithm using 40 cores with hyper-threading.
 LZ-ANSV is the closest sequential algorithm after the ANSV generation, while the ANSV generation algorithm comes from PLZ3.
 
-The first and most important metric to look at is how the BLZ chunk size affects the final LZ factorization size.
-If the percent increase, which we will now call percent error, is too great, then the usage of BLZ is unacceptable.
-What percent error is too great is a judgement that must be made by each user, as each user will have their own requirements.
-To pick the different chunk sizes, I decided to use number of divisions as the parameter, although I could have used the actual block size as mentioned before.
-More specifically I used multiples of the number of SMs (15).
-To try and get a good spread I used powers of 2 to multiply.
+The first and most important metric to look at is how the PLZ chunk size affects the final LZ factorization size.
+If the percent increase is too great, then the usage of PLZ is unacceptable.
+What percent increas is too great is a judgement that must be made by each user, as each user will have their own requirements.
+To pick the different chunk sizes, we decided to use number of divisions as the parameter, although we could have used the actual block size as mentioned before.
+More specifically we used multiples of the number of SMs (15).
+To try and get a good spread we used powers of 2 to multiply.
 
 The second most important metric is how the chunk sizes affect the runtimes. 
 Since the suffix array construction and the ANSV generation are unrelated, we will keep our focus on the LPF time.
@@ -162,26 +167,28 @@ Many LZ factorization papers evaluate the runtime of their algorithm starting af
 We will consider that runtime later.
 
 Figure \ref{fig:lzchart} presents the results with these two metrics together.
-We show the effect of percent error and runtime as a function of the number of divisions.
+We show the effect of percent increase and runtime as a function of the number of divisions.
 The key difference is A is geometric while B is linear.
 We have included averages as a convenience.
-First, we notice that the percent error grows linearly with the number of divisions.
-This trend is intuitive as each extra division has a chance to increase the final BLZ length if the division boundary occurs between the ideal LZ factorization.
+First, we notice that the percent increase grows linearly with the number of divisions.
+This trend is intuitive as each extra division has a chance to increase the final PLZ length if the division boundary occurs between the ideal LZ factorization.
 Next, we notice that the runtimes generally decreases rapidly as we increase the number of divisions.
 At some point however, the rapid decreases stops and increasing the divisions further does not have as much effect on the runtime.
-As we can see in figure XX, this occurs at around 480 divisions with an average of 303.7 ms.
-At this point, the percent error averages around .01 percent.
-For some perspective, a file that compresses to 1 Mb using the ideal LZ factorization would require an additional 105 bytes using BLZ.
-As we increase the number of divisions from 480 to 30720, the runtime only decreases 32 percent to 204.9 ms.
-Meanwhile, that increase increases the percent error over 150 percent to 1.54 percent error.
-Further increases of the number of divisions might actually begin to slowly increase the runtime, as we see the average increases ever so slightly to 262.6 ms when we double the divisions to 61440.
-We will now deem this .01 percent error acceptable and use these values as we continue the evaluation.
+As we can see in figure \ref{fig:lzchart}, this occurs at around 480 divisions for both cards.
+At 480 divisions the datasets have .01 average percent increase.
+For some perspective, a file that compresses to 1 Mb using the ideal LZ factorization would require an additional 105 bytes using PLZ.
+At this point, the Black has an average runtime of 303.7 ms, while the K40c has an average runtime of 406.8 ms.
+As we increase the number of divisions from 480 to 30720, Black's runtime decreases only 30 percent, while increasing the percent increase over 150 percent to 1.54 percent increase.
+Similarly, K40c's runtime decreases only 32 percent.
+We will now deem this .01 percent increase acceptable and use these values as we continue the evaluation.
 
 We now take a look at how our GPU implementation compares to the CPU LZ factorization implementations mentioned earlier.
 Table \ref{tab:lzdata} tabulates the results and speedups found in our experiments.
 Our GPU implementation outperforms LZ-OG and LZ-ANSV on all the data sets.
-Our implementation sees speedups between 12x and 18x compared to LZ-OG and speedups between 10x and 14x compared to LZ-ANSV.
-When compared to the 40 core PLZ3 implementation, our GPU implementation performs comparatively with speedups of .1-.5x.
+Black sees speedups between 15-24x compared to LZ-OG and speedups between 13-19x compared to LZ-ANSV.
+When compared to the 40 core PLZ3 implementation, Black performs comparatively with speedups of .1-.5x.
+The slower, K40c sees speedups of 12-19x and 10-15x against LZ-OG and LZ-ANSV respectively.
+K40c performed comparitively with PLZ3 having speedups and slowdowns no more than 0.2x.
 
 \begin{figure}[ht!]
 \centering
@@ -195,5 +202,5 @@ The majority of our implementation, like most LZ factorization implementations, 
 The suffix array construction takes on average 81 percent of the overall time.
 
 Excluded from the results are highly compressible input.
-These files incur an incredible space cost when using BLZ, as each division is likely to add an additional factor to the factorization.
-An additional factor with a highly compressable input could and probably will result in very high percent errors.
+These files incur an incredible space cost when using PLZ, as each division is likely to add an additional factor to the factorization.
+An additional factor with a highly compressable input could and probably will result in very high percent increases.

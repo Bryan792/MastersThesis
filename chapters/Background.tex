@@ -33,6 +33,7 @@ These limits are also dependant on the compute capability of the GPU.
 The CUDA engineer usually tries to limit their accesses to global memory and make use of the faster shared and register memory.
 
 \subsection{Libraries and Parallel Primitives}
+\label{sec:primitives}
 
 There exist a variety of libaries that make development on CUDA more streamlined.
 These libraries provide a variety of uses for the CUDA engineer.
@@ -63,17 +64,28 @@ That said, many of the algorithms are shared between CUB and Thrust.
 We decided to choose CUB for its claims at higher performance than Thrust and specific features unavailable in Thrust, like the primitives that work on the block level.
 Some of the primitives that we use in our implementation include an inclusive sum, device select, radix sort, and block reduce.
 
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=1.0\textwidth]{images/MergePath.png}
+\caption{Merge Path partitioning scheme. Figure taken from \cite{odeh2012merge}}
+\label{fig:mgpu}
+\end{figure}
+
 Another interesting library that we make use of is Modern GPU, MGPU.
 More specifically we make use of its algorithm for merge sorting.
 One of the primary concerns when parallel programming is how to load balance a problem across the threads.
-%TODO figure
-MGPU makes use of a technique called Merge Path\cite{odeh2012merge}.
-Merge Path realizes that if we imagined the two arrays on a grid, the merge sort follows a path through it.
-We can run diagonals throught the grid to find their intersection with this Merge Path, where all comparisons are true on one side and false on the other.
-This can be done quickly using a binary sort.
-We can now figure out exactly which sections of the arrays correspond to sections of the final merged array.
-With even divisions, we can evenly divide the final output among the threads, each knowing which sections of the input array they need.
-Those threads can then merge those sections, employing Merge Path if they so wish to.
+MGPU makes use of a technique called Merge Path.
+A merge sort takes in two sorted arrays, A and B, and outputs a final larger sorted array C with elements from both of the original arrays.
+First, let us imagine a merge matrix, a matrix where each row corresponds to an element from A and each column represents an element from B.
+If we were to try and run the merge sort sequentially, we'd start at the top left corner, and traverse the grid, moving right or down, depending on if A is greater than B at a specific element.
+Merge Path realizes that a path of traversal, the so-called merge path, is formed through the merge matrix during a merge sort.
+Merge Path runs diagonals through the merge matrix and find their intersection with the merge path.
+All elements on the diagonal before the intersection have a less than relationship.
+We can use this fact to quickly find the intersection using a binary sort.
+Using the intersections of the merge path, we now know which groups of elements from A and B are responsible for specific sections of C.
+If we use even divisions, we can then partition the work in a way that each thread is responsible for a constant number of elements from C.
+Figure \ref{fig:mgpu} shows what an example merge matrix with a merge path and divisions.
+We refer you to the original paper of \cite{odeh2012merge} for a better understanding.
 
 There are some caveats when using these libraries.
 The first is that they provide an additional dependency to your application.
@@ -309,8 +321,8 @@ In their project, they were able to show a O(n) work algorithm with significant 
 Most of our implementation matches their's, except on the GPU; however, we do not calculate the whole LPF string, and make use of the lazy LZ factorization technique described earlier.
 The cost to calculate the ideal LZ factorization in a parallel fashion, as they did, was too great for GPU.
 Calculating every LPF position was a very memory intensive task that we found took too long on the GPU due to the high memory latency.
-This was the primary cause to the usage of the BLZ, which we'll describe in Chapter \ref{chap:implementation}.
+This was the primary cause to the usage of the PLZ, which we'll describe in Chapter \ref{chap:implementation}.
 
-%BLZ is like sliding window where long prefix is whole string, and suffix is chunk size
+%PLZ is like sliding window where long prefix is whole string, and suffix is chunk size
 
 % http://delivery.acm.org.ezproxy.lib.calpoly.edu/10.1145/2380000/2379781/a5-al-hafeedh.pdf?ip=129.65.23.208&id=2379781&acc=ACTIVE%20SERVICE&key=F26C2ADAC1542D74%2E2870C5A035FC0FDB%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35&CFID=343020533&CFTOKEN=37720775&__acm__=1400733002_66a60490d28a219a079b67ccd7c8315e
