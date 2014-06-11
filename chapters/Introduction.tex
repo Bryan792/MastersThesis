@@ -1,17 +1,17 @@
 \chapter{Introduction}
 Lossless data compression has the ability to reduce storage requirements, while still maintaining the integrity of the original data.
-Several advantages can be gained by reducing the size of data, including the relief of transfer accoss I/O channels.
-Compression algorithms have a tradeoff, in that they require an additional computation to be done on the original data before a compressed version can be used.
+Several advantages can be gained by reducing the size of data, including the relief of transfer across I/O channels.
+Compression algorithms have a trade-off, in that they require an additional computation to be done on the original data before a compressed version can be used.
 This can be computationally expensive and the cost to compress might require too much processing or time.
 In many cases and applications, the increase of bandwidth rates outweighs any other consideration, but the increase in compression rates would generally be helpful.
 This work takes a look into speeding up those compression rates by performing the compression directly on a GPU, a graphics processing unit.
 
-An increase of applications and algorithms are being developed to utilize the relatively new general purpose computing (GPGPU) apsect of GPU technology.
+Applications and algorithms are beginning to be developed and ported to utilize the relatively new general purpose computing (GPGPU) aspect of GPU technology.
 GPGPUs allow applications to run computations unrelated to graphics, while allowing for the exploitation of the massively parallel nature of GPUs.
-GPGPUs are becoming increasingly popular for high performance computing, and many of the world's fastest supercomputers utilize GPGPUs in large clusters.
+GPGPUs are becoming increasingly popular for high performance computing, and are often utilized in large clusters.
 GPGPUs are typically used as coprocessors, assisting the CPU by performing tasks assigned to it.
 Typically, all desktop computers have some form of GPU; often, they are not always being used or are underutilized.
-Devoloping an application that can run on the GPU allows us to make use of this underutilized hardware.
+Developing an application that can run on the GPU allows us to make use of this underutilized hardware.
 Being faster than a CPU implementation is just an added bonus.
 
 %GPGPU massively parallel
@@ -20,14 +20,14 @@ Being faster than a CPU implementation is just an added bonus.
 %Thesis statement
 Our contribution is a Lempel-Ziv factorization, a lossless compression algorithm, implementation that runs directly on the GPU.
 The first step of the factorization is the construction of a suffix array.
-We reimplemented and reevaluated the GPU suffix array construction algorithm by Deo and Meeley\cite{Deo}.
-Through the use of a PLZ, we were able to find a parallel solution that incur's only a .1 percent space cost, while finding 12-18x speedups over the fastest single threaded CPU solution.
+We reimplemented and reevaluated the GPU suffix array construction algorithm by Deo and Keely\cite{Deo}.
+Breaking down the problem so that it can be done in parallel, we were able to find a solution that found speedups of 12-18x over the fastest single threaded CPU solution, while only increasing the final compressed output by 0.1 percent.
 %compare to plz3
 
 %Organization
 This thesis is organized as follows.
-Chapter \ref{chap:background} defines GPU technology and the Lempel-Ziv factorization problem.
-Chapter \ref{chap:implementation} describes our GPU implementation of Lempel-Ziv factorization.
-Chapter \ref{chap:results} describes our evaluation and results.
-Chapter \ref{chap:conclusion} presents our conclusions.
-Finally, Chapter \ref{chap:futurework} discusses further steps that could be taken.
+Chapter~\ref{chap:background} defines GPU technology and the Lempel-Ziv factorization problem.
+Chapter~\ref{chap:implementation} describes our GPU implementation of Lempel-Ziv factorization.
+Chapter~\ref{chap:results} describes our evaluation and results.
+Chapter~\ref{chap:conclusion} presents our conclusions.
+Finally, Chapter~\ref{chap:futurework} discusses further steps that could be taken.

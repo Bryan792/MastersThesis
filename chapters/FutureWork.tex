@@ -1,8 +1,8 @@
 \chapter{Future Work}
 \label{chap:futurework}
 
-Our implementation, like many other LZ factorizaton implementations, was just a proof of concept to show compression speeds and compression ratio.
-Although we do output the correct pairs needed, we could take it further and encode them in a way that decompressers can understand.
+Our implementation, like many other LZ factorization implementations, was a proof of concept to show compression speeds and compression ratio.
+Although we do output the correct pairs needed, we could take it further and encode them in a way that decompression implementations can understand.
 In doing so, we could create an actual utility to be used to compress actual data.
 
 One aspect that was not considered in this thesis was the effect of having previous knowledge of the input.
@@ -15,11 +15,11 @@ If this is not possible, we could also check if three characters could fit into 
 Recent work has looked at different ways to solve the ANSV problem.
 Work done in \cite{Computing longest previous factor in linear time and applications} and \cite{Simpler and Faster Lempel Ziv Factorization} has explored a technique called peak elimination to solve the ANSV problem.
 It is unclear whether this solution would parallelize and fit on the GPU architecture.
-They also found success using a single data strucute to hold both the PSVs and NSVs to improve memory locality.
+They also found success using a single data structure to hold both the PSVs and NSVs to improve memory locality.
 
 Another very important measurement that we did not consider was the space efficiency of our algorithm.
 As inputs, such as DNA sequences, grow larger and larger, it is important to make sure the algorithm is as space efficient as possible, so that the algorithm can scale.
-Recent work by \cite{Space Efﬁcient Linear Time Lempel-Ziv Factorization on Constant Size Alphabets} has shown methods to reduce the space needed by LZ factorization algorithms by reusing the space required by auxillary data structures.
+Recent work by \cite{Space Efﬁcient Linear Time Lempel-Ziv Factorization on Constant Size Alphabets} has shown methods to reduce the space needed by LZ factorization algorithms by reusing the space required by auxiliary data structures.
 It is especially important when working on the GPU, where hardware limits are stricter, memory is more sparse, and the communication overhead to go back and forth from the GPU to the CPU is expensive.
 
 Multiple GPU support is becoming increasingly popular as GPU applications become more mainstream.
@@ -27,8 +27,8 @@ Enabling multiple GPU support would allow our implementation to handle larger in
 It would be interesting to investigate the added communication overhead and its effects on the overall performance.
 Multiple GPU support would also allow us to accompany high performance users, who have machines or clusters of machines with single or multiple GPUs.
 
-A simpler optimization that could be added in future implementations is a more dynamic and adaptable kernel launch parameters.
-In our implementation, we left many of the kernel paramters as program launch parameters for exhaustive trial and error.
+A simpler optimization that could be added in future implementations is a more dynamic kernel launch parameters.
+In our implementation, we left many of the kernel parameters as program launch parameters for exhaustive trial and error.
 Other kernel parameters were also optimized specifically to the GPU we used for evaluation.
 Our implementation would still work with other GPUs, but different parameters might find faster compression speeds.
 One approach is to gather information about the GPU using the CUDA API before launching any kernels.
@@ -48,9 +48,8 @@ Since most of the data is generated and remains on the GPU, unified memory may o
 It would still be interesting to evaluate if these new features could provide speedups.
 
 As of now, our implementation works only on NVIDIA GPUs through the use of CUDA.
-Although GPGPU development is dominated by NVIDIA CUDA on NVIDIA GPUS, the graphics market share includes many other significant vendors, including AMD and Intel.
+Although GPGPU development is dominated by NVIDIA CUDA on NVIDIA GPUs, the graphics market share includes many other significant vendors, including AMD and Intel.
 There are a variety of methods to create an implementation for use with those other vendors.
-The first is to rewrite the implementation using OpenCL.
-OpenACC, GPU Ocelot
+One option is to rewrite the implementation using OpenCL.
+Other options include utilizing efforts such as OpenACC or GPU Ocelot.
 Furthermore, the usage of PLZ could be examined on different platforms, where the cost to perform string comparisons are not as expensive, like a multicore CPU.
-

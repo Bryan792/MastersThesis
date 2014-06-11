@@ -79,6 +79,7 @@
 \usepackage{mdframed}
 \usepackage{algpseudocode}
 \usepackage{booktabs}
+\usepackage{fixltx2e}
 
 
 \usepackage{rotating}
@@ -128,7 +129,7 @@
 \author{Bryan Ching}
 \degreemonth{June} \degreeyear{2014} \degree{Master of Science}
 \defensemonth{June} \defenseyear{2014}
-\numberofmembers{3} \chair{Professor Zo{\"e} Wood, Ph.D.,\newline Department of Computer Science} \othermemberA{Assistant Professor Chris Lupo, Ph.D.,\newline Department of Computer Science} \othermemberB{Professor Franz Kurfess, Ph.D.,\newline Department of Computer Science} \field{Computer Science} \campus{San Luis Obispo}
+\numberofmembers{3} \chair{Professor Chris Lupo, Ph.D.,\newline Department of Computer Science} \othermemberA{Professor John Seng, Ph.D.,\newline Department of Computer Science} \othermemberB{Professor Zachary N J Peterson, Ph.D.,\newline Department of Computer Science} \field{Computer Science} \campus{San Luis Obispo}
 \copyrightyears{seven}
 
 
@@ -144,7 +145,17 @@
 \committeemembershippage
 
 \begin{abstract}
-TODO
+Lossless data compression is used to reduce storage requirements, allowing for the relief of I/O channels and better utilization of bandwidth.
+The Lempel-Ziv lossless compression algorithms form the basis for many of the most commonly used compression schemes.
+General purpose computing on graphic processing units (GPGPUs) allows us to take advantage of the massively parallel nature of GPUs for computations other that their original purpose of rendering graphics. 
+Our work targets the use of GPUs for general lossless data compression.
+Specifically, we developed and ported an algorithm that constructs the Lempel-Ziv factorization directly on the GPU.
+Our implementation bypasses the sequential nature of the LZ factorization and attempts to compute the factorization in parallel.
+By breaking down the LZ factorization into what we call the PLZ, we are able to outperform the fastest serial CPU implementations by up to 24x and perform comparatively to a parallel multicore CPU implementation.
+To achieve these speeds, our implementation outputted LZ factorizations that were on average only 0.01 percent greater than what could be computed sequentially.
+
+We are also able to reevaluate the fastest GPU suffix array construction algorithm, which is needed to compute the LZ factorization.
+We are able to find speedups of up to 5x over the fastest CPU implementations.
 
 \end{abstract}
 

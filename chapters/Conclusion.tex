@@ -4,11 +4,11 @@
 We have presented an algorithm and implementation to calculate the Lempel-Ziv factorization on the GPU.
 We show the usage of PLZ in the calculation of the LZ factorization.
 Although this removed our ability to calculate the ideal LZ factorization that would be calculated in a traditional sequential algorithm, we found that using the PLZ found significant speedups on the GPU, while incurring a minimal space cost.
-Specifically in our evaluation, we found using 480 divisions only increased the LZ factorization by .01 percent.
-Using 480 divisions, we were able find speedups on an NVIDIA GTX TITAN Black of 15-24x over the sequential LZ-OG algorithm and up to .5x over the multicore parallel PLZ3.
-Using the PLZ, although not calculating the most space efficient ideal LZ factorization, could work well in a more practical environments.
+Specifically in our evaluation, we found using 480 divisions only increased the LZ factorization by 0.01 percent.
+Using 480 divisions, we were able find speedups on an NVIDIA GTX TITAN Black of 15-24x over the sequential LZ-OG algorithm and up to 0.5x over the multicore parallel PLZ3.
+Using the PLZ, although not calculating the most space efficient ideal LZ factorization, could work well where time is a more important factor.
 
-We have also presented a reimplementaion and reevaluation of the GPU suffix array construction algorithm of Deo and Meely\cite{Deo}.
+We have also presented a reimplementation and reevaluation of the GPU suffix array construction algorithm of Deo and Keely \cite{Deo}.
 With the use of GPU libraries and parallel primitives, we were able to replicate their OpenCL results using CUDA on a NVIDIA GPU.
-On files greater than 10 mb, we found at least a 4-5x speedup over the fastest CPU implementations.
+On files greater than 10 MB, we found at least a 4-5x speedup over the fastest CPU implementations.
 This suffix array algorithm and implementation have many applications outside of data compression, most notably in bioinformatics.

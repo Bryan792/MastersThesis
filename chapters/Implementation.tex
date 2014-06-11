@@ -1,7 +1,7 @@
 \chapter{Implementation}
 \label{chap:implementation}
 
-There exists three main steps in my implementation, the construction of the suffix array, the calculation of ANSV for every index, and finally the generation of the LZ factorization.
+Our implementation is structured in three main steps: the construction of the suffix array, the calculation of ANSV for every index, and finally the generation of the LZ factorization.
 
 \section{SA}
 
@@ -49,7 +49,7 @@ We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
 13 & b        & 7          & 4          &            &    \\ \bottomrule
 \end{tabular}
 \caption{Split=7,LZ=8}
-\label{table:example7}
+\label{tab:example7}
 \end{table}
 
 \begin{table}[h]
@@ -76,7 +76,7 @@ We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
 13 & b        & 7          & 4          & -          & -  \\ \bottomrule
 \end{tabular}
 \caption{Split=4,LZ=9}
-\label{table:example4}
+\label{tab:example4}
 \end{table}
 
 \begin{table}[h]
@@ -104,15 +104,15 @@ We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & PrevOcc{[}i{]} & LPF{[}i{]} & LZ \\ \
 13 & b        & 7          & 4          & -              & -          & -  \\ \bottomrule
 \end{tabular}
 \caption{Split=3,LZ=8}
-\label{table:example3}
+\label{tab:example3}
 \end{table}
 
-The construction of the suffix array stays true to the algorithm used by deo and meely \cite{Deo}.
-In figure \ref{algorithm:sa}, we show the pseudocode used by Deo and Meely.
+The construction of the suffix array stays true to the algorithm used by Deo and Meely \cite{Deo}.
+In Figure~\ref{algorithm:sa}, we show the pseudocode used by Deo and Meely.
 To sort the triples, we used CUB's implementation of radix sort.
 In line 6, we need to check if the sorted triplets are unique.
 To accomplish this, we used a combination of small custom kernels and CUB primitives.
-Finally as mentioned in section \ref{sec:primitives}, we used the MGPU library to facilitate the merge sort.
+Finally as mentioned in Section~\ref{sec:primitives}, we used the MGPU library to facilitate the merge sort.
 
 \section{ANSV}
 
@@ -138,7 +138,7 @@ Finally as mentioned in section \ref{sec:primitives}, we used the MGPU library t
 \label{algorithm:ansv}
 \end{figure}
 
-To calculate the needed ANSV values we used the parallel algorithm from Shun and Zhao\cite{shun2013practical}.
+To calculate the needed ANSV values we used the parallel algorithm from Shun and Zhao \cite{shun2013practical}.
 
 The first step is to build a balanced binary tree, where the leaves are elements from SA, and the ancestors are the minima of their children.
 Although more efficient algorithms may exist, we decide to take a simpler naive approach and launch a kernel at each level.
@@ -149,25 +149,25 @@ A 2d array would be easier to index into, but much more difficult to allocate.
 The suffix array is then divided into even divisions.
 Each thread uses a stack, in the form of an array, and traditionally solves ANSV for their division.
 Because each thread can only see their division, many of the positions will think there is no smaller position, while they may exist in the next or previous division.
-To compensate for this, each thread will manually check each position that did not find a smaller value using RMQs on the previously generated binary tree.
+To compensate for this, each thread will manually check each position that did not find a smaller value using a search on the previously generated binary tree.
 
 This algorithm will generate the ANSV arrays for each index, although not every index is needed in the final LZ factorization. 
-We did play around with solving the ANSV problem for a specific index only when needed, but found that in most cases, this was only a little faster or much slower.
+We did experiment with the idea of solving the ANSV problem for a specific index only when needed, but found that in most cases, this was only a little faster or much slower.
 
 \section{LZ Factorization}
 
 The final step is to calculate the LZ factorization.
 
-At first, we attempted to follow the parallel algorithm of jshun.
+At first, we attempted to follow the parallel algorithm of Shun and Zhao \cite{shun2013practical}.
 In their work, the LPF array is calculated for every position, and then the LZ factorization is solved using a parallel list ranking algorithm.
-Like many more recent works, we found that the calculation of the LPF array at every index to be too computationaly expensive and wasteful, even on the GPU.
-Instead, my work will also employ the lazy LZ factorization, mentioned in \cite{ }.
+Like many more recent works, we found that the calculation of the LPF array at every index to be too computationally expensive and wasteful, even on the GPU.
+Instead, our work will also employ the lazy LZ factorization, mentioned in \cite{ }.
 The biggest problem with the lazy LZ factorization was that it is incredibly sequential.
 Since it is impossible to know what entries will exist in future points in the LZ factorization, it is a hard problem to parallelize.
 
 \subsection{PLZ}
 
-We propose breaking away from the ideal LZ factorization and using PLZ.
+We propose breaking away from the ideal LZ factorization and using a parallel LZ factorization (PLZ).
 Using PLZ, the string S will be broken into chunks of size c to be worked on individually.
 Each thread will be assigned a chunk and traditionally calculate the LZ factorization on it.
 The LZ factorization calculated by each thread will be entered unmodified into the final LZ factorization.
@@ -176,7 +176,7 @@ By doing this, we are also able to limit the amount of work any one thread will 
 There are several disadvantages that may appear, all of which depend on the original input string.
 There is a chance for the PLZ LZ factorization to be larger than the ideal LZ factorization.
 There is also an unlikely chance for them to be exactly the same.
-We would like to explain the different scenarios to you with an anology.
+We would like to explain the different scenarios to you with an analogy.
 
 Let's imagine the LZ factorization of a string to be a stairway with floors.
 Generating the LZ factorization is like constructing said stairway and floors.
@@ -184,7 +184,7 @@ Each floor represents an entry into the LZ factorization.
 Each stair represents a character match in the LPF for the floor beneath it.
 A sequential algorithm would have you start at the ground floor.
 At that point we know where the LPF is located.
-Of course in reality, we know of two possible locations where the LPF might be, but we'll simplify it to one for this anology.
+Of course in reality, we know of two possible locations where the LPF might be, but we'll simplify it to one for this analogy.
 When you are on a floor, you, the builder, walk up a stair for each match.
 When the LPF no longer matches, you put a floor to represent a new entry and repeat.
 In the end, the number of stairs should match the number of original characters, and the number of floors represent the length of the ideal LZ factorization.
@@ -203,7 +203,7 @@ The PLZ factorization is then exactly the same as the ideal LZ factorization.
 The next scenarios occurs when the inserted ground floors are inserted in between existing floors from the ideal.
 When this happens, the PLZ LZ factorization is automatically increased by at least one, from the new ground floor.
 The LPF of the previous floor is no longer the longest it can be, since we stop the matching at the end of the chunk.
-This also limits the maximum offset, the longest match in the LZ factorizaion, to be the chunk size.
+This also limits the maximum offset, the longest match in the LZ factorization, to be the chunk size.
 This new ground floor now performs the sequential algorithm as always.
 The next floor that is inserted by the builder may or may not be where a floor existed.
 This is entirely dependent on the input string and is impossible to predict.
@@ -213,28 +213,28 @@ At that point onward, the PLZ LZ factorization again matches with the ideal.
 The next question to be answered is deciding the chunk size c. 
 A larger chunk size could reduce the chances for a larger factorization and increase compression ratios.
 On the other hand, a smaller chunk size would more evenly distribute the work among the GPU threads, and in turn should increase compression speeds.
-This is a tradeoff that should be left to the user.
-In my implementation, we have the option to define an arbitrary size for the chunk size c or to for the number of divisions d.
+This is a trade-off that should be left to the user.
+In our implementation, we have the option to define an arbitrary size for the chunk size c or for a number of divisions d of the input string.
 Some optimal sizes might be to use divisions that are multiples of the number of multiprocessors.
 In any case, it is impossible to predict the compression ratio, and different people will have different priorities.
 
-Table \ref{table:example7}, \ref{table:example4}, and \ref{table:example3} show the resulting LZ factorization when using PLZ with chunk sizes of 7, 4, and 3 respectively. 
+The resulting LZ factorization when using PLZ with chunk sizes of 7, 4, and 3 can be seen in Tables~\ref{tab:example7}, \ref{tab:example4}, and \ref{tab:example3}. 
 These chunk sizes, from a string size n=14, can result from divisions of d = 2, 4, 5.
-Table \ref{table:allsolved} can be used as reference with the whole LPF and PrevOcc arrays filled.
+Table~\ref{tab:allsolved} can be used as reference with the whole LPF and PrevOcc arrays filled.
 First note that the LPF and PrevOcc arrays are not totally filled.
 As we are doing a lazy LZ factorization, not all values need to be computed, and this is shown accordingly.
 Next, notice that there are breaks within the table.
 These indicate chunks for a single thread, or block as we'll see soon, to work on.
 The next thing to notice are the bold elements in the LPF array.
-A bold element indicates that the value is no longer the LPF at that position and are changed from the reference LPF values.
+A bold element indicates that the value is no longer the LPF at that position and is changed from the reference LPF values.
 Recall that when using PLZ, the string matching stops at the end of a chunk.
 
-In table \ref{table:example7} with a chunk size of 7 and a divison of 2, we can see that there are no changes in the LZ factorization.
-The split occured at position we = 7, the beginning of a factor in the ideal LZ factorization.
+In Table~\ref{tab:example7} with a chunk size of 7 and a division of 2, we can see that there are no changes in the LZ factorization.
+The split occurred at position we = 7, the beginning of a factor in the ideal LZ factorization.
 Therefore, we see no changes while being able to solve the problem in parallel.
 
-Table \ref{table:example4} and \ref{table:example3} will begin to show changes from the ideal LZ factorization.
-In table \ref{table:example4}, we use a chunk size of 4 and a division of 4.
+Tables~\ref{tab:example4} and \ref{tab:example3} begin to show changes from the ideal LZ factorization.
+In Table~\ref{tab:example4}, we use a chunk size of 4 and a division of 4.
 Notice how the third chunk starts at position 8.
 Because the ideal LZ factorization did not have a factor starting at position 8, it can be determined that the PLZ LZ factorization is no longer the same as the LZ factorization.
 The LPF at position 8 is 2, so that the next factor starts at position 10.
@@ -242,7 +242,7 @@ The ideal LZ factorization had a factor starting at position 10, so we are now b
 Any additional factors calculated from this chunk should match that of the ideal LZ factorization.
 The resulting PLZ LZ factorization has a length of l=9, 1 more than the ideal LZ factorization length of l=8;
 
-The last example in table \ref{table:example3} shows a chunk size of 3 and a division of 5.
+The last example in Table~\ref{tab:example3} shows a chunk size of 3 and a division of 5.
 Notice again that chunks 2 and 3, starting at positions 6 and 9 respectively, have a different factor from the ideal LZ factorization.
 A key thing to realize from this example is that the length is unchanged.
 Both the PLZ LZ factorization and the LZ factorization have a length, l=8.
@@ -257,14 +257,14 @@ A block of threads can load a group of characters into shared memory.
 The BlockLoad primitive from CUB is used to load a number of characters from the LPF and from the prefix into arrays for use in an individual thread in the block.
 To simplify, we can imagine a block of 32 threads loading a chunk of 32 characters from the LPF and prefix.
 Each thread, responsible for a single index and two characters, then compares the two characters for a match.
-A match is assigned the value blockDim.x (32), and a mismatch is assigned the value threadIdx.x (0-31).
-The threads can then cooperatively min reduce the problem, with the BlockReduce primitive from CUB for example.
+A match is assigned the block's id (32), and a mismatch is assigned the thread's id (0-31).
+The threads can then cooperatively find the minimum in a block using reduction, with the BlockReduce primitive from CUB for example.
 If all 32 characters matched, the value 32 is returned to the first thread in the block, which controls all the logic.
 That thread will then set a flag to indicate to the rest of threads to continue with the comparisons.
-If there exist a mismatch, the index of the mismatch is instead returned to the first thread, which can then stop the comparisons.
-Which implementation is faster is soley dependent on the data and the average factor length.
+If there is a mismatch, the index of the mismatch is instead returned to the first thread, which can then stop the comparisons.
+Which implementation is faster is solely dependent on the data and the average factor length.
 Average factor lengths less than the number of characters loaded and compared in parallel may see faster speeds with just the naive comparisons.
-My implementation will use the parallel string comparison for evaluation.
+Our implementation will use the parallel string comparison for evaluation.
 In doing so, each chunk is worked on by a single block.
 
 Finally because we are cutting off the matching at the end of the chunk, an optimization can be made to reduce the number of searches.
