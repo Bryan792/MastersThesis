@@ -13,13 +13,13 @@ If we know exactly how many bits represent the largest character or integer in t
 If this is not possible, we could also check if three characters could fit into a smaller number of characters and perform a lesser number of radix sorts on them.
 
 Recent work has looked at different ways to solve the ANSV problem.
-Work done in \cite{Computing longest previous factor in linear time and applications} and \cite{Simpler and Faster Lempel Ziv Factorization} has explored a technique called peak elimination to solve the ANSV problem.
+Work done in \cite{crochemore2008computing} and \cite{goto2013simpler} has explored a technique called peak elimination to solve the ANSV problem.
 It is unclear whether this solution would parallelize and fit on the GPU architecture.
 They also found success using a single data structure to hold both the PSVs and NSVs to improve memory locality.
 
 Another very important measurement that we did not consider was the space efficiency of our algorithm.
 As inputs, such as DNA sequences, grow larger and larger, it is important to make sure the algorithm is as space efficient as possible, so that the algorithm can scale.
-Recent work by \cite{Space Efﬁcient Linear Time Lempel-Ziv Factorization on Constant Size Alphabets} has shown methods to reduce the space needed by LZ factorization algorithms by reusing the space required by auxiliary data structures.
+Recent work by \cite{goto2014space} has shown methods to reduce the space needed by LZ factorization algorithms by reusing the space required by auxiliary data structures.
 It is especially important when working on the GPU, where hardware limits are stricter, memory is more sparse, and the communication overhead to go back and forth from the GPU to the CPU is expensive.
 
 Multiple GPU support is becoming increasingly popular as GPU applications become more mainstream.

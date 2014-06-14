@@ -161,13 +161,13 @@ The final step is to calculate the LZ factorization.
 At first, we attempted to follow the parallel algorithm of Shun and Zhao \cite{shun2013practical}.
 In their work, the LPF array is calculated for every position, and then the LZ factorization is solved using a parallel list ranking algorithm.
 Like many more recent works, we found that the calculation of the LPF array at every index to be too computationally expensive and wasteful, even on the GPU.
-Instead, our work will also employ the lazy LZ factorization, mentioned in \cite{ }.
+Instead, our work will also employ the lazy LZ factorization, mentioned in \cite{karkkainen2013linear}.
 The biggest problem with the lazy LZ factorization was that it is incredibly sequential.
 Since it is impossible to know what entries will exist in future points in the LZ factorization, it is a hard problem to parallelize.
 
 \subsection{PLZ}
 
-We propose breaking away from the ideal LZ factorization and using a parallel LZ factorization (PLZ).
+We propose breaking away from the ideal LZ factorization and using a Parallel LZ factorization (PLZ).
 Using PLZ, the string S will be broken into chunks of size c to be worked on individually.
 Each thread will be assigned a chunk and traditionally calculate the LZ factorization on it.
 The LZ factorization calculated by each thread will be entered unmodified into the final LZ factorization.
@@ -176,39 +176,61 @@ By doing this, we are also able to limit the amount of work any one thread will 
 There are several disadvantages that may appear, all of which depend on the original input string.
 There is a chance for the PLZ LZ factorization to be larger than the ideal LZ factorization.
 There is also an unlikely chance for them to be exactly the same.
-We would like to explain the different scenarios to you with an analogy.
+We would like to explain the different scenarios to you.
 
-Let's imagine the LZ factorization of a string to be a stairway with floors.
-Generating the LZ factorization is like constructing said stairway and floors.
-Each floor represents an entry into the LZ factorization.
-Each stair represents a character match in the LPF for the floor beneath it.
-A sequential algorithm would have you start at the ground floor.
-At that point we know where the LPF is located.
-Of course in reality, we know of two possible locations where the LPF might be, but we'll simplify it to one for this analogy.
-When you are on a floor, you, the builder, walk up a stair for each match.
-When the LPF no longer matches, you put a floor to represent a new entry and repeat.
-In the end, the number of stairs should match the number of original characters, and the number of floors represent the length of the ideal LZ factorization.
+Let's remember that an entry into the final LZ factorization indicates the start of a factor.
+The ideal LZ factorization is a sequence of longest previous factors.
+When we use PLZ, we are breaking down the LZ factorization into chunks to be worked on in parallel.
+At the start of each chunk, we insert a first entry into the LZ factorization.
+We then continue calculating the LZ factorization using the traditional sequential algorithm.
+At the end of the chunk, we stop the string comparisons and cut off the current factor.
+By stopping the string comparisons, we are able to limit the amount of work needed to process a chunk.
+This also means that factors are limited in length to the chunk size.
 
-Now we'll look at what happens when we use PLZ to parallelize the problem.
-First, we remove all the floors.
-Next, to split up the input, we insert ground floors at regular intervals.
-After, we travel the stairway inserting floors, like the sequential algorithm above.
-Finally, we stop when we get to the next ground floor.
-There are several scenarios that can occur.
-The first scenario occurs when an inserted ground floor is inserted where an existing floor used to exist.
-The LZ factorization calculated, starting at this ground floor, is exactly the same as the ideal LZ factorization, up until the next ground floor.
-The extreme of this scenario happens if every inserted ground floor is inserted where a floor used to exist.
-The PLZ factorization is then exactly the same as the ideal LZ factorization.
+The first scenario occurs when that first entry is in the same position as an ideal LZ factorization factor.
+The LZ factorization of that chunk will then be the same as the ideal LZ factorization.
+If every first entry is in the same positions as an ideal LZ factorization, the final PLZ LZ factorization will be exactly the same as the ideal LZ factorization.
 
-The next scenarios occurs when the inserted ground floors are inserted in between existing floors from the ideal.
-When this happens, the PLZ LZ factorization is automatically increased by at least one, from the new ground floor.
-The LPF of the previous floor is no longer the longest it can be, since we stop the matching at the end of the chunk.
-This also limits the maximum offset, the longest match in the LZ factorization, to be the chunk size.
-This new ground floor now performs the sequential algorithm as always.
-The next floor that is inserted by the builder may or may not be where a floor existed.
-This is entirely dependent on the input string and is impossible to predict.
-It is very likely though at some point, for the floors to again match the existing floors.
-At that point onward, the PLZ LZ factorization again matches with the ideal.
+The next scenarios occur when a first entry is not in the same position as an ideal LZ factorization factor.
+This would happen when the chunk splits in the middle of a ideal LZ factorization factor.
+In these scenarios, the last factor in the previous chunk will no longer be the longest.
+The LPF of that last factor will be shorter than the ideal LZ factorization.
+When the LZ factorization is calculated on this chunk, the next factor may or may not start at an ideal LZ factorization factor.
+We then begin calculating the LZ factorization of that chunk, starting at that first entry.
+If any of the calculated factors begin at the start of the ideal LZ factorization factor, then all factors after will also match the ideal LZ factorization.
+It is impossible to know which of these scenarios will occur, since they are all dependent on the input string.
+
+%Let's imagine the LZ factorization of a string to be a stairway with floors.
+%Generating the LZ factorization is like constructing said stairway and floors.
+%Each floor represents an entry into the LZ factorization.
+%Each stair represents a character match in the LPF for the floor beneath it.
+%A sequential algorithm would have you start at the ground floor.
+%At that point we know where the LPF is located.
+%Of course in reality, we know of two possible locations where the LPF might be, but we'll simplify it to one for this analogy.
+%When you are on a floor, you, the builder, walk up a stair for each match.
+%When the LPF no longer matches, you put a floor to represent a new entry and repeat.
+%In the end, the number of stairs should match the number of original characters, and the number of floors represent the length of the ideal LZ factorization.
+%
+%Now we'll look at what happens when we use PLZ to parallelize the problem.
+%First, we remove all the floors.
+%Next, to split up the input, we insert ground floors at regular intervals.
+%After, we travel the stairway inserting floors, like the sequential algorithm above.
+%Finally, we stop when we get to the next ground floor.
+%There are several scenarios that can occur.
+%The first scenario occurs when an inserted ground floor is inserted where an existing floor used to exist.
+%The LZ factorization calculated, starting at this ground floor, is exactly the same as the ideal LZ factorization, up until the next ground floor.
+%The extreme of this scenario happens if every inserted ground floor is inserted where a floor used to exist.
+%The PLZ factorization is then exactly the same as the ideal LZ factorization.
+%
+%The next scenarios occurs when the inserted ground floors are inserted in between existing floors from the ideal.
+%When this happens, the PLZ LZ factorization is automatically increased by at least one, from the new ground floor.
+%The LPF of the previous floor is no longer the longest it can be, since we stop the matching at the end of the chunk.
+%This also limits the maximum offset, the longest match in the LZ factorization, to be the chunk size.
+%This new ground floor now performs the sequential algorithm as always.
+%The next floor that is inserted by the builder may or may not be where a floor existed.
+%This is entirely dependent on the input string and is impossible to predict.
+%It is very likely though at some point, for the floors to again match the existing floors.
+%At that point onward, the PLZ LZ factorization again matches with the ideal.
 
 The next question to be answered is deciding the chunk size c. 
 A larger chunk size could reduce the chances for a larger factorization and increase compression ratios.
@@ -218,7 +240,7 @@ In our implementation, we have the option to define an arbitrary size for the ch
 Some optimal sizes might be to use divisions that are multiples of the number of multiprocessors.
 In any case, it is impossible to predict the compression ratio, and different people will have different priorities.
 
-The resulting LZ factorization when using PLZ with chunk sizes of 7, 4, and 3 can be seen in Tables~\ref{tab:example7}, \ref{tab:example4}, and \ref{tab:example3}. 
+The resulting PLZ LZ factorization when using PLZ with chunk sizes of 7, 4, and 3 can be seen in Tables~\ref{tab:example7}, \ref{tab:example4}, and \ref{tab:example3}. 
 These chunk sizes, from a string size n=14, can result from divisions of d = 2, 4, 5.
 Table~\ref{tab:allsolved} can be used as reference with the whole LPF and PrevOcc arrays filled.
 First note that the LPF and PrevOcc arrays are not totally filled.
