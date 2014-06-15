@@ -152,7 +152,7 @@ Our work targets the use of GPUs for general lossless data compression.
 Specifically, we developed and ported an algorithm that constructs the Lempel-Ziv factorization directly on the GPU.
 Our implementation bypasses the sequential nature of the LZ factorization and attempts to compute the factorization in parallel.
 By breaking down the LZ factorization into what we call the PLZ, we are able to outperform the fastest serial CPU implementations by up to 24x and perform comparatively to a parallel multicore CPU implementation.
-To achieve these speeds, our implementation outputted LZ factorizations that were on average only 0.01 percent greater than what could be computed sequentially.
+To achieve these speeds, our implementation outputted LZ factorizations that were on average only 0.01 percent greater than the optimal solution that what could be computed sequentially.
 
 We are also able to reevaluate the fastest GPU suffix array construction algorithm, which is needed to compute the LZ factorization.
 We are able to find speedups of up to 5x over the fastest CPU implementations.

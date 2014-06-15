@@ -22,14 +22,14 @@ Data for our evaluation was gathered from various publicly available datasets, o
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=1.0\textwidth]{images/saresult.png}
-\caption{Speedup of GPU implementation to fastest CPU implementation}
+\caption{Speedup of suffix array construction on the GPU compared to the fastest CPU implementation}
 \label{fig:saresult}
 \end{figure}
 
 \begin{table}[h]
 \begin{tabular}{@{}lllllll@{}}
 \toprule
-size(MB) & filename  & Black  & K40c   & CPU   & Black Speedup & Black ms/input \\ \midrule
+size(MB) & filename  & Black(ms)  & K40c(ms)   & CPU(ms)   & Black Speedup & Black ms/B \\ \midrule
 0.05     & paper1    & 15.2   & 16     & 34    & 2.2           & 0.286          \\
 0.11     & bib       & 19.3   & 21.2   & 34    & 1.8           & 0.173          \\
 0.36     & news      & 33.6   & 36.8   & 46    & 1.4           & 0.089          \\
@@ -44,7 +44,7 @@ size(MB) & filename  & Black  & K40c   & CPU   & Black Speedup & Black ms/input 
 66.50    & jdk13c    & 1928.2 & 2525.4 & 9010  & 4.7           & 0.028          \\
 99.37    & w3c2      & 2896   & 3840.8 & 13486 & 4.7           & 0.028          \\ \bottomrule
 \end{tabular}
-\caption{Runtimes(ms), speedups, and ms/input of datasets for evaluation of suffix array construction}
+\caption{Runtimes(ms), speedups, and ms/B of datasets for evaluation of suffix array construction}
 \label{tab:sadata}
 \end{table}
 
@@ -52,7 +52,7 @@ The evaluation of the suffix array is actually an evaluation of a reimplementati
 The benefits and applications of the suffix array has already been detailed in Section~\ref{sec:sa} 
 Deo and Keely's evaluation was done on an AMD Radeon GPU using OpenCL.
 Our results on a NVIDIA GPU using CUDA and CUB primitives with ModernGPU's merge path method to mergesort are not expected to be significantly different.
-We will be comparing out results to a set of SACA benchmarks found on the wiki of LibDivSufSort, one of if not the fastest CPU SACA implementation \cite{SACA}.
+We will be comparing our results to a set of SACA benchmarks found on the wiki of LibDivSufSort, one of if not the fastest CPU SACA implementation \cite{SACA}.
 That benchmark compares the fastest CPU SACA implementations on a variety of test files.
 We will compare our GPU implementation against the fastest CPU time for each file.
 Files were picked to match closely with Deo and Keely's evaluation.
@@ -64,9 +64,9 @@ Our GPU implementation did not see the speedup of 35x that theirs did, but we st
 We did not have their implementation or their raw result data to compare against.
 Loosely comparing with the charts in their paper though, we find that our GPU implementation is at least on par if not faster.
 
-Another interesting metric is the runtime in microseconds per input symbol seen in \cite{al2012comparison}.
-We found that after a certain point, our Black implementation was achieving rates of around 0.02 to 0.03 ms per input symbol.
-In comparison, \cite{al2012comparison} found results between 0.1 to 0.4 ms per input symbol.
+Another interesting metric is the runtime in microseconds per Byte seen in \cite{al2012comparison}.
+We found that after a certain point, our Black implementation was achieving rates of around 0.02 to 0.03 ms/B.
+In comparison, \cite{al2012comparison} found results between 0.1 to 0.4 ms/B.
 
 Like many other GPU algorithms, we found that smaller files did not see the greater speedups that larger files did.
 The likely cause is that smaller files cannot fully saturate the GPU, and the cost of initialization and data transfer could not be hidden by increased computations.
