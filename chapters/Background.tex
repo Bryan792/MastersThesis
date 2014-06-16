@@ -183,7 +183,7 @@ We can then move on to the suffix, $suf_7 = baaabab$, and continue until the who
 
 The LZ factorization can be encoded simply using a sequence of pairs.
 One encoding scheme uses the pair with a position of previous occurrence and the length of the match or a character, if the length is 0.
-We can store the positions of previous occurrence into a Previous Occurrence (PrevOcc) array and the the length of the the match into a Longest Previous Factor (LPF) array.
+We can store the positions of previous occurrence into a Previous Occurrence (PrevOcc) array and the length of the the match into a Longest Previous Factor (LPF) array.
 The string abbaabbbaaabab encoded using this scheme would output:\\
 \centerline{(PrevOcc, LPF) = [(a, 0),(b, 0),(1, 1),(0, 1),(0, 1),(2, 3),(0, 3),(10, 2)]}
 Another encoding scheme uses the pair of original position, stored in the LZ array, and the position of the previous occurrence (LZ, PrevOcc).\\
