@@ -28,85 +28,6 @@ Our implementation is structured in three main steps: the construction of the su
 \label{algorithm:sa}
 \end{figure}
 
-\begin{table}[h]
-\centering
-\begin{tabular}{@{}llllll@{}}
-\toprule
-We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
-0  & a        & -1         & -1         & 0          & 0  \\
-1  & b        & -1         & 0          & 0          & 1  \\
-2  & b        & 1          & 0          & 1          & 2  \\
-3  & a        & 0          & -1         & 1          & 3  \\
-4  & a        & 2          & 0          & 3          & 4  \\
-5  & b        & -1         & 1          &            &    \\
-6  & b        & 1          & 2          &            &    \\
-   &          &            &            &            &    \\
-7  & b        & 2          & 4          & 3          & 7  \\
-8  & a        & 3          & -1         &            &    \\
-9  & a        & 3          & 8          &            &    \\
-10 & a        & 0          & 3          & 2          & 10 \\
-11 & b        & 6          & 2          &            &    \\
-12 & a        & 10         & 3          & 2          & 12 \\
-13 & b        & 7          & 4          &            &    \\ \bottomrule
-\end{tabular}
-\caption{chunk size c=7, divisions d=2, LZ=8}
-\label{tab:example7}
-\end{table}
-
-\begin{table}[h]
-\centering
-\begin{tabular}{@{}llllll@{}}
-\toprule
-We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
-0  & a        & -1         & -1         & 0          & 0  \\
-1  & b        & -1         & 0          & 0          & 1  \\
-2  & b        & 1          & 0          & 1          & 2  \\
-3  & a        & 0          & -1         & 1          & 3  \\
-   &          &            &            &            &    \\
-4  & a        & 2          & 0          & 3          & 4  \\
-5  & b        & -1         & 1          & -          & -  \\
-6  & b        & 1          & 2          & -          & -  \\
-7  & b        & 2          & 4          & 3          & 7  \\
-   &          &            &            &            &    \\
-8  & a        & 3          & -1         & 2          & 8  \\
-9  & a        & 3          & 8          & -          & -  \\
-10 & a        & 0          & 3          & 2          & 10 \\
-11 & b        & 6          & 2          & -          & -  \\
-   &          &            &            &            &    \\
-12 & a        & 10         & 3          & 2          & 12 \\
-13 & b        & 7          & 4          & -          & -  \\ \bottomrule
-\end{tabular}
-\caption{chunk size c=4, divisions d=2, LZ=9}
-\label{tab:example4}
-\end{table}
-
-\begin{table}[h]
-\centering
-\begin{tabular}{@{}lllllll@{}}
-\toprule
-We  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & PrevOcc{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
-0  & a        & -1         & -1         & -1             & 0          & 0  \\
-1  & b        & -1         & 0          & -1             & 0          & 1  \\
-2  & b        & 1          & 0          & 1              & 1          & 2  \\
-   &          &            &            &                &            &    \\
-3  & a        & 0          & -1         & 0              & 1          & 3  \\
-4  & a        & 2          & 0          & 0              & 2          & 4  \\
-5  & b        & -1         & 1          & -              & -          & -  \\
-   &          &            &            &                &            &    \\
-6  & b        & 1          & 2          & 1              & 3          & 6  \\
-7  & b        & 2          & 4          & -              & -          & -  \\
-8  & a        & 3          & -1         & -              & -          & -  \\
-   &          &            &            &                &            &    \\
-9  & a        & 3          & 8          & 3              & 3          & 9  \\
-10 & a        & 0          & 3          & -              & -          & -  \\
-11 & b        & 6          & 2          & -              & -          & -  \\
-   &          &            &            &                &            &    \\
-12 & a        & 10         & 3          & 10             & 2          & 12 \\
-13 & b        & 7          & 4          & -              & -          & -  \\ \bottomrule
-\end{tabular}
-\caption{chunk size c=3, divisions d=2 ,LZ=8}
-\label{tab:example3}
-\end{table}
 
 The construction of the suffix array stays true to the algorithm used by Deo and Keely \cite{Deo}.
 In Figure~\ref{algorithm:sa}, we show the pseudocode used by Deo and Keely.
@@ -169,6 +90,86 @@ The biggest problem with the lazy LZ factorization was that it is incredibly seq
 Since it is impossible to know what entries will exist in future points in the LZ factorization, it is a hard problem to parallelize.
 
 \subsection{PLZ}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & 0          & 0  \\
+1  & b        & -1         & 0          & 0          & 1  \\
+2  & b        & 1          & 0          & 1          & 2  \\
+3  & a        & 0          & -1         & 1          & 3  \\
+4  & a        & 2          & 0          & 3          & 4  \\
+5  & b        & -1         & 1          &            &    \\
+6  & b        & 1          & 2          &            &    \\
+   &          &            &            &            &    \\
+7  & b        & 2          & 4          & 3          & 7  \\
+8  & a        & 3          & -1         &            &    \\
+9  & a        & 3          & 8          &            &    \\
+10 & a        & 0          & 3          & 2          & 10 \\
+11 & b        & 6          & 2          &            &    \\
+12 & a        & 10         & 3          & 2          & 12 \\
+13 & b        & 7          & 4          &            &    \\ \bottomrule
+\end{tabular}
+\caption{chunk size c=7, divisions d=2, LZ=8}
+\label{tab:example7}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}llllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & 0          & 0  \\
+1  & b        & -1         & 0          & 0          & 1  \\
+2  & b        & 1          & 0          & 1          & 2  \\
+3  & a        & 0          & -1         & 1          & 3  \\
+   &          &            &            &            &    \\
+4  & a        & 2          & 0          & 3          & 4  \\
+5  & b        & -1         & 1          & -          & -  \\
+6  & b        & 1          & 2          & -          & -  \\
+7  & b        & 2          & 4          & 3          & 7  \\
+   &          &            &            &            &    \\
+8  & a        & 3          & -1         & 2          & 8  \\
+9  & a        & 3          & 8          & -          & -  \\
+10 & a        & 0          & 3          & 2          & 10 \\
+11 & b        & 6          & 2          & -          & -  \\
+   &          &            &            &            &    \\
+12 & a        & 10         & 3          & 2          & 12 \\
+13 & b        & 7          & 4          & -          & -  \\ \bottomrule
+\end{tabular}
+\caption{chunk size c=4, divisions d=2, LZ=9}
+\label{tab:example4}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+i  & S{[}i{]} & NSV{[}i{]} & PSV{[}i{]} & PrevOcc{[}i{]} & LPF{[}i{]} & LZ \\ \midrule
+0  & a        & -1         & -1         & -1             & 0          & 0  \\
+1  & b        & -1         & 0          & -1             & 0          & 1  \\
+2  & b        & 1          & 0          & 1              & 1          & 2  \\
+   &          &            &            &                &            &    \\
+3  & a        & 0          & -1         & 0              & 1          & 3  \\
+4  & a        & 2          & 0          & 0              & 2          & 4  \\
+5  & b        & -1         & 1          & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+6  & b        & 1          & 2          & 1              & 3          & 6  \\
+7  & b        & 2          & 4          & -              & -          & -  \\
+8  & a        & 3          & -1         & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+9  & a        & 3          & 8          & 3              & 3          & 9  \\
+10 & a        & 0          & 3          & -              & -          & -  \\
+11 & b        & 6          & 2          & -              & -          & -  \\
+   &          &            &            &                &            &    \\
+12 & a        & 10         & 3          & 10             & 2          & 12 \\
+13 & b        & 7          & 4          & -              & -          & -  \\ \bottomrule
+\end{tabular}
+\caption{chunk size c=3, divisions d=2 ,LZ=8}
+\label{tab:example3}
+\end{table}
 
 We propose breaking away from the ideal LZ factorization and using a Parallel LZ factorization (PLZ).
 Using PLZ, the string $S$ will be broken into chunks of size $c$ to be worked on individually.
