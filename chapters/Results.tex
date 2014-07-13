@@ -169,8 +169,7 @@ First, we notice that the percent increase grows linearly with the number of div
 This trend is intuitive as each extra division has a chance to increase the final PLZ length if the division boundary occurs between the ideal LZ factorization.
 Next, we notice that the runtime generally decreases rapidly as we increase the number of divisions.
 At some point however, the rapid decreases stops and increasing the divisions further does not have as much effect on the runtime.
-As we can see in Figure~\ref{fig:lzchart}, this occurs at around 480 divisions for both cards.
-At 480 divisions the datasets have 0.01 average percent increase.
+As we can see in Figure~\ref{fig:lzchart}, this occurs at around 480 divisions for both cards, with a 0.01 average percent increase.
 For some perspective, a file that compresses to 1 MB using the ideal LZ factorization would require an additional 105 bytes using PLZ.
 At this point, the Black has an average runtime of 303.7 ms, while the K40c has an average runtime of 406.8 ms.
 As we increase the number of divisions from 480 to 30720, Black's runtime decreases only 30 percent, while the percent increase changes over 150 percent to 1.54 percent.
@@ -196,9 +195,7 @@ Figure~\ref{fig:allprof} shows a profile of the three main sections of our imple
 The majority of our implementation, like most LZ factorization implementations, spend most of their time constructing the suffix array.
 The suffix array construction takes on average 81 percent of the overall time.
 
-Highly compressible inputs are excluded from the above results.
-These files incur an incredible space cost when using PLZ, as each division is likely to add an additional factor to the factorization.
-An additional factor with a highly compressible input could and probably will result in very high percent increases.
+Highly compressible inputs are excluded from the above results, because they are likely to incur an incredible space cost when using PLZ.
 Specifically, the file 10Midentical contained only one character.
 The resulting ideal LZ factorization contained 2 factors.
 Each PLZ division increased the LZ factorization by 1 factor.
